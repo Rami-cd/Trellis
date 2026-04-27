@@ -67,3 +67,6 @@ Thumbs.db
 *.iml
 *.iws
 *.ipr
+
+# temp
+temp/
