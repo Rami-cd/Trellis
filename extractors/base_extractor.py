@@ -1,6 +1,5 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Any
 from core.models.node import CodeNode
 from core.models.edge import CodeEdge
 from tree_sitter import Tree
