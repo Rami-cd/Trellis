@@ -1,0 +1,57 @@
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE TABLE IF NOT EXISTS repositories (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    path        TEXT NOT NULL,
+    language    TEXT
+);
+
+CREATE TABLE IF NOT EXISTS code_nodes (
+    id              TEXT PRIMARY KEY,
+    repo_id         TEXT NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
+    name            TEXT NOT NULL,
+    type            TEXT NOT NULL,
+    language        TEXT,
+    path            TEXT,
+    qualified_name  TEXT NOT NULL,
+    start_line      INT,
+    end_line        INT,
+    start_byte      INT,
+    end_byte        INT,
+    raw_source      TEXT,
+    attributes      JSONB NOT NULL DEFAULT '{}',
+    embedding       VECTOR(768)
+);
+
+CREATE TABLE IF NOT EXISTS code_edges (
+    id          TEXT PRIMARY KEY,
+    source_id   TEXT NOT NULL REFERENCES code_nodes(id) ON DELETE CASCADE,
+    target_id   TEXT REFERENCES code_nodes(id) ON DELETE SET NULL,
+    target_ref  TEXT,
+    type        TEXT NOT NULL,
+    attributes  JSONB NOT NULL DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS ix_nodes_embedding
+    ON code_nodes USING hnsw (embedding vector_cosine_ops)
+    WITH (m = 16, ef_construction = 64);
+
+CREATE INDEX IF NOT EXISTS ix_nodes_name_trgm
+    ON code_nodes USING gin (name gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS ix_nodes_repo_path
+    ON code_nodes (repo_id, path);
+
+CREATE INDEX IF NOT EXISTS ix_edges_source_id
+    ON code_edges (source_id);
+
+CREATE INDEX IF NOT EXISTS ix_edges_target_id
+    ON code_edges (target_id);
+
+CREATE INDEX IF NOT EXISTS ix_edges_source_type
+    ON code_edges (source_id, type);
+
+CREATE INDEX IF NOT EXISTS ix_edges_target_ref_trgm
+    ON code_edges USING gin (target_ref gin_trgm_ops);

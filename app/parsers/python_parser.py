@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 from tree_sitter import Language, Parser, Tree
 import tree_sitter_python as tspython
-from parsers.base_parser import BaseParser
+from app.parsers.base_parser import BaseParser
 
 logger = logging.getLogger(__name__)
 

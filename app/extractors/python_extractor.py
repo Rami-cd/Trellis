@@ -1,7 +1,7 @@
 from typing import Any
-from core.models.node import CodeNode, CodeNodeType
-from core.models.edge import CodeEdge, CodeEdgeType
-from extractors.base_extractor import BaseExtractor
+from app.schemas.node import CodeNode, CodeNodeType
+from app.schemas.edge import CodeEdge, CodeEdgeType
+from app.extractors.base_extractor import BaseExtractor
 from tree_sitter import Tree
 import hashlib
 
@@ -27,7 +27,7 @@ class PythonExtractor(BaseExtractor):
             
             # handling imports
             if node.type == "import_statement" or node.type == "import_from_statement":
-                edges.extend(self._handle_import(node, file_path, source))
+                edges.extend(self._handle_import(node, file_path, source, module_node.id))
             
             elif node.type == "function_definition":
                 function_node, function_edges = self._handle_function(
@@ -36,6 +36,7 @@ class PythonExtractor(BaseExtractor):
                     file_path,
                     module_node.id,
                     self._repo,
+                    None,
                 )
                 nodes.append(function_node)
                 edges.extend(function_edges)
@@ -60,6 +61,7 @@ class PythonExtractor(BaseExtractor):
                         file_path,
                         module_node.id,
                         self._repo,
+                        None,
                     )
                     nodes.append(function_node)
                     edges.extend(function_edges)
@@ -76,7 +78,7 @@ class PythonExtractor(BaseExtractor):
         
         return nodes, edges   
 
-    def _handle_import(self, node: Any, file_path: str, source: bytes) -> list[CodeEdge]:
+    def _handle_import(self, node: Any, file_path: str, source: bytes, module_id: str) -> list[CodeEdge]:
         def node_text(child: Any) -> str:
             return source[child.start_byte:child.end_byte].decode("utf-8").strip()
 
@@ -243,7 +245,7 @@ class PythonExtractor(BaseExtractor):
             edges.append(
                 CodeEdge(
                     id=self._make_edge_id(file_path, module_name, CodeEdgeType.IMPORTS),
-                    source_id=file_path,
+                    source_id=module_id,
                     target_id=None,
                     target_ref=module_name,
                     type=CodeEdgeType.IMPORTS,
@@ -270,7 +272,7 @@ class PythonExtractor(BaseExtractor):
             raw_source=node.text.decode("utf-8"),
         )
 
-    def _handle_class(self, node: Any, source: bytes, file_path: str, parent_id: str, repo: str,) -> tuple[list[CodeNode], list[CodeEdge]]:
+    def _handle_class(self, node: Any, source: bytes, file_path: str, parent_id: str, repo: str) -> tuple[list[CodeNode], list[CodeEdge]]:
         def node_text(child: Any) -> str:
             return source[child.start_byte:child.end_byte].decode("utf-8")
 
@@ -368,20 +370,22 @@ class PythonExtractor(BaseExtractor):
                     file_path,
                     class_id,
                     repo,
+                    class_qualified_name,
                 )
-                method_node.qualified_name = f"{class_qualified_name}.{method_node.name}"
-                for method_edge in method_edges:
-                    if (
-                        method_edge.type == CodeEdgeType.DEFINES
-                        and method_edge.target_id == method_node.id
-                    ):
-                        method_edge.target_ref = method_node.qualified_name
                 nodes.append(method_node)
                 edges.extend(method_edges)
 
         return nodes, edges
 
-    def _handle_function(self, node: Any, source: bytes, file_path: str, parent_id: str, repo: str,) -> tuple[CodeNode, list[CodeEdge]]:
+    def _handle_function(
+        self,
+        node: Any,
+        source: bytes,
+        file_path: str,
+        parent_id: str,
+        repo: str,
+        class_qualified_name: str | None,
+    ) -> tuple[CodeNode, list[CodeEdge]]:
         _ = source
 
         if node.type == "decorated_definition":
@@ -434,7 +438,12 @@ class PythonExtractor(BaseExtractor):
 
         name = name_node.text.decode("utf-8")
         module_qualified_name = self._module_name_from_path(file_path)
-        qualified_name = f"{module_qualified_name}.{name}" if module_qualified_name else name
+        if class_qualified_name:
+            qualified_name = f"{class_qualified_name}.{name}"
+        else:
+            qualified_name = (
+                f"{module_qualified_name}.{name}" if module_qualified_name else name
+            )
         start_line = node.start_point[0] + 1
         function_id = self._make_node_id(repo, file_path, qualified_name, start_line)
 
@@ -498,6 +507,8 @@ class PythonExtractor(BaseExtractor):
                 calls.append(function_node.text.decode("utf-8"))
 
         for child in node.children:
+            if child.type == "function_definition":
+                continue
             calls.extend(self._extract_calls(child))
 
         return calls

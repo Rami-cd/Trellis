@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 from typing import Iterable
-from parsers.base_parser import BaseParser
+from app.parsers.base_parser import BaseParser
 
 class ParserRegistry:
 
