@@ -1,25 +1,12 @@
-# Core dependencies
-fastapi==0.109.0
-pydantic==2.5.3
-uvicorn==0.27.0
-requests==2.31.0
-
 # Code parsing and analysis
-tree-sitter==0.20.4
-tree-sitter-python==0.21.0
-
-# LLM and AI
-google-generativeai==0.3.0
-
-# Data processing and vector operations
-# numpy==1.24.3
-# scikit-learn==1.3.2
+tree-sitter==0.25.2
+tree-sitter-python==0.25.0
 
 # Configuration management
 pyyaml==6.0.1
 
 # Database
-psycopg2-binary==2.9.9
+psycopg[binary]
 sqlalchemy==2.0.49
 alembic==1.18.4
 
@@ -29,3 +16,7 @@ pytest-cov==4.1.0
 
 # Development and utilities
 python-dotenv==1.0.0
+
+# Web framework
+fastapi==0.109.0
+uvicorn==0.27.0
