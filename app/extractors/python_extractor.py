@@ -18,6 +18,7 @@ class PythonExtractor(BaseExtractor):
     def extract(self, tree: Tree, source: bytes, file_path: str) -> tuple[list[CodeNode], list[CodeEdge]]:
         nodes: list[CodeNode] = []
         edges: list[CodeEdge] = []
+        import_edges: dict[str, CodeEdge] = {}
         
         root_node = tree.root_node
         module_node = self._hanlde_module(root_node, file_path, source)
@@ -27,7 +28,12 @@ class PythonExtractor(BaseExtractor):
             
             # handling imports
             if node.type == "import_statement" or node.type == "import_from_statement":
-                edges.extend(self._handle_import(node, file_path, source, module_node.id))
+                for import_edge in self._handle_import(node, file_path, source, module_node.id):
+                    existing_edge = import_edges.get(import_edge.id)
+                    if existing_edge is None:
+                        import_edges[import_edge.id] = import_edge
+                        continue
+                    self._merge_import_bindings(existing_edge, import_edge)
             
             elif node.type == "function_definition":
                 function_node, function_edges = self._handle_function(
@@ -76,6 +82,7 @@ class PythonExtractor(BaseExtractor):
                     nodes.extend(class_nodes)
                     edges.extend(class_edges)
         
+        edges = list(import_edges.values()) + edges
         return nodes, edges   
 
     def _handle_import(self, node: Any, file_path: str, source: bytes, module_id: str) -> list[CodeEdge]:
@@ -233,12 +240,17 @@ class PythonExtractor(BaseExtractor):
             else:
                 module_name = node_text(module_node)
                 register_import(module_name)
-                for imported_name, alias in imported_names:
-                    register_import(
-                        module_name,
-                        imported_name=imported_name,
-                        alias=alias,
-                    )
+
+                has_wildcard = any(child.type == "wildcard_import" for child in node.children)
+                if has_wildcard:
+                    register_import(module_name, imported_name="*")
+                else:
+                    for imported_name, alias in imported_names:
+                        register_import(
+                            module_name,
+                            imported_name=imported_name,
+                            alias=alias,
+                        )
 
         edges: list[CodeEdge] = []
         for module_name, import_data in imports.items():
@@ -301,6 +313,7 @@ class PythonExtractor(BaseExtractor):
             base_nodes = list(superclasses_node.children_by_field_name("argument"))
             if not base_nodes:
                 base_nodes = [child for child in superclasses_node.children if child.is_named]
+            base_nodes = [child for child in base_nodes if child.type != "keyword_argument"]
 
         bases = [node_text(base_node) for base_node in base_nodes]
         name = node_text(name_node)
@@ -507,11 +520,29 @@ class PythonExtractor(BaseExtractor):
                 calls.append(function_node.text.decode("utf-8"))
 
         for child in node.children:
-            if child.type == "function_definition":
+            if child.type in {"function_definition", "lambda"}:
                 continue
             calls.extend(self._extract_calls(child))
 
         return calls
+
+    def _merge_import_bindings(self, existing_edge: CodeEdge, incoming_edge: CodeEdge) -> None:
+        existing_bindings = existing_edge.attributes.setdefault("bindings", [])
+        incoming_bindings = incoming_edge.attributes.get("bindings", [])
+        seen = {
+            (binding.get("name"), binding.get("alias"))
+            for binding in existing_bindings
+            if isinstance(binding, dict)
+        }
+
+        for binding in incoming_bindings:
+            if not isinstance(binding, dict):
+                continue
+            key = (binding.get("name"), binding.get("alias"))
+            if key in seen:
+                continue
+            existing_bindings.append(binding)
+            seen.add(key)
 
     def _module_name_from_path(self, file_path: str) -> str:
         normalized = file_path.replace("\\", "/").strip("/")
