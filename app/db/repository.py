@@ -264,3 +264,15 @@ def get_subgraph(
     edges = [dict(row) for row in edge_rows]
 
     return {"nodes": nodes, "edges": edges}
+
+
+def fetch_by_repo(db, repo_id: str) -> list[CodeNode]:
+    ...
+
+
+def update_summary(db, node_id: str, summary: str) -> None:
+    ...
+
+
+def upsert_embedding(db, node_id: str, chunk_text: str, embedding: list[float]) -> None:
+    ...

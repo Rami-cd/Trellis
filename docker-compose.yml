@@ -59,7 +59,7 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
-    entrypoint: sh -c "OLLAMA_HOST=http://ollama:11434 ollama pull nomic-embed-text"
+    entrypoint: sh -c "OLLAMA_HOST=http://ollama:11434 ollama pull unclemusclez/jina-embeddings-v2-base-code:q4"
     restart: "no"
 
 volumes:
