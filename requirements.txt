@@ -20,3 +20,7 @@ python-dotenv==1.0.0
 # Web framework
 fastapi==0.109.0
 uvicorn==0.27.0
+httpx
+
+# llm
+google-genai==1.74.0

@@ -2,9 +2,10 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 CREATE TABLE IF NOT EXISTS repositories (
-    id      TEXT PRIMARY KEY,
-    name    TEXT NOT NULL,
-    path    TEXT NOT NULL
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    path        TEXT NOT NULL,
+    indexed_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS repository_languages (
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS code_nodes (
     start_byte      INT,
     end_byte        INT,
     raw_source      TEXT,
+    summary         TEXT,
     attributes      JSONB NOT NULL DEFAULT '{}'
 );
 
@@ -45,6 +47,15 @@ CREATE TABLE IF NOT EXISTS code_embeddings (
     chunk_text  TEXT NOT NULL,
     embedding   VECTOR(768),
     UNIQUE (node_id, chunk_index)
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id              TEXT PRIMARY KEY,
+    focus_node_id   TEXT REFERENCES code_nodes(id) ON DELETE SET NULL,
+    active_node_ids TEXT[] NOT NULL DEFAULT '{}',
+    last_query_type TEXT,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    expires_at      TIMESTAMPTZ NOT NULL
 );
 
 -- indexes
@@ -72,3 +83,6 @@ CREATE INDEX IF NOT EXISTS ix_embeddings_node_id
 CREATE INDEX IF NOT EXISTS ix_embeddings_vector
     ON code_embeddings USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 64);
+
+CREATE INDEX IF NOT EXISTS ix_sessions_expires_at
+    ON sessions (expires_at);

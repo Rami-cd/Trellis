@@ -25,6 +25,9 @@ class CodeNode:
     attributes: dict[str, Any] = field(default_factory=dict) # metadata
     raw_source: str | None = None
 
+    summary: str | None = None
+    embedding: list[float] | None = None
+
     """
     attributes = {
         "calls": [...],        # list[dict]
