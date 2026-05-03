@@ -1,14 +1,20 @@
 from __future__ import annotations
 import logging
+import os
+
 from app.db.repository import update_summary, upsert_embedding
 from app.llm.embedding.jina_embedder import JinaEmbedder
 from app.llm.summarizer.gemini import GeminiSummarizer
 from app.schemas.node import CodeNode, CodeNodeType
 
 logger = logging.getLogger(__name__)
+MAX_EMBED_DOCUMENT_CHARS = int(os.environ.get("MAX_EMBED_DOCUMENT_CHARS", "6000"))
 
 def _build_document(node: CodeNode) -> str:
-    return f"{node.qualified_name}\n\nSummary: {node.summary or ''}\n\n{node.raw_source or ''}"
+    prefix = f"{node.qualified_name}\n\nSummary: {node.summary or ''}\n\n"
+    raw_source = node.raw_source or ""
+    remaining_chars = max(0, MAX_EMBED_DOCUMENT_CHARS - len(prefix))
+    return prefix + raw_source[:remaining_chars]
 
 class Indexer:
     def __init__(

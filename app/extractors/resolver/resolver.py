@@ -97,9 +97,12 @@ def _resolve_call(
     if not edge.target_ref:
         return None
 
+    is_self_or_cls = False
+
     # strip self./cls.
     parts = edge.target_ref.split(".")
     if parts[0] in {"self", "cls"}:
+        is_self_or_cls = True
         parts = parts[1:]
     target = ".".join(parts)
     if not target:
@@ -116,6 +119,21 @@ def _resolve_call(
         return None
 
     # 1. local — search by qualified name within this module
+    if (
+        is_self_or_cls
+        and source_node.qualified_name
+        and source_node.qualified_name.startswith(f"{source_module.qualified_name}.")
+    ):
+        relative_qname = source_node.qualified_name[len(source_module.qualified_name) + 1:]
+        relative_parts = relative_qname.split(".")
+        if len(relative_parts) >= 2:
+            class_qname = (
+                f"{source_module.qualified_name}.{'.'.join(relative_parts[:-1])}"
+            )
+            local = node_by_qname.get(f"{class_qname}.{target}")
+            if local:
+                return local[0]
+
     local = node_by_qname.get(f"{source_module.qualified_name}.{target}")
     if local:
         return local[0]
