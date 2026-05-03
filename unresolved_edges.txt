@@ -1,0 +1,532 @@
+unresolved edge: Exception
+unresolved edge: logging
+unresolved edge: time
+unresolved edge: pathlib
+unresolved edge: app.db.connection
+unresolved edge: app.db.repository
+unresolved edge: app.extractors.python_extractor
+unresolved edge: app.extractors.resolver.resolver
+unresolved edge: app.llm.embedding.jina_embedder
+unresolved edge: app.llm.summarizer.gemini
+unresolved edge: app.parsers.parser_registry
+unresolved edge: app.parsers.python_parser
+unresolved edge: app.schemas.node
+unresolved edge: app.services.indexer
+unresolved edge: app.services.search.bm25
+unresolved edge: int
+unresolved edge: time.time
+unresolved edge: ParserRegistry
+unresolved edge: PythonParser
+unresolved edge: PythonExtractor
+unresolved edge: repo_root.rglob
+unresolved edge: file_path.relative_to(repo_root).as_posix
+unresolved edge: file_path.relative_to
+unresolved edge: parser_registry.get_by_extension
+unresolved edge: file_path.read_text
+unresolved edge: parser.parse
+unresolved edge: extractor.extract
+unresolved edge: source.encode
+unresolved edge: nodes.extend
+unresolved edge: edges.extend
+unresolved edge: logger.info
+unresolved edge: len
+unresolved edge: nodes_by_id.get
+unresolved edge: logging.basicConfig
+unresolved edge: REPO_PATH.resolve
+unresolved edge: repo_root.exists
+unresolved edge: FileNotFoundError
+unresolved edge: logger.info
+unresolved edge: resolve_edges
+unresolved edge: len
+unresolved edge: SessionLocal
+unresolved edge: GeminiSummarizer
+unresolved edge: JinaEmbedder
+unresolved edge: fetch_by_repo
+unresolved edge: BM25Index
+unresolved edge: bm25.build
+unresolved edge: bm25.search
+unresolved edge: logger.warning
+unresolved edge: VectorSearch
+unresolved edge: HybridSearch
+unresolved edge: hybrid.search
+unresolved edge: resolve_edges
+unresolved edge: Counter
+unresolved edge: print
+unresolved edge: len
+unresolved edge: type_counts.most_common
+unresolved edge: Path
+unresolved edge: fout_file.open
+unresolved edge: f.write
+unresolved edge: os
+unresolved edge: collections.abc
+unresolved edge: dotenv
+unresolved edge: sqlalchemy
+unresolved edge: sqlalchemy.orm
+unresolved edge: SessionLocal
+unresolved edge: session.close
+unresolved edge: json
+unresolved edge: typing
+unresolved edge: sqlalchemy
+unresolved edge: sqlalchemy.orm
+unresolved edge: app.schemas.edge
+unresolved edge: app.schemas.node
+unresolved edge: session.execute
+unresolved edge: text
+unresolved edge: session.commit
+unresolved edge: session.execute
+unresolved edge: text
+unresolved edge: json.dumps
+unresolved edge: session.commit
+unresolved edge: session.execute
+unresolved edge: text
+unresolved edge: json.dumps
+unresolved edge: session.commit
+unresolved edge: session.execute(text("""
+        SELECT
+            id, repo_id, name, type, path, qualified_name,
+            start_line, end_line, start_byte, end_byte,
+            language, raw_source, attributes
+        FROM code_nodes
+        WHERE repo_id = :repo_id
+        ORDER BY path, start_line
+    """), {"repo_id": repo_id}).mappings().all
+unresolved edge: session.execute(text("""
+        SELECT
+            id, repo_id, name, type, path, qualified_name,
+            start_line, end_line, start_byte, end_byte,
+            language, raw_source, attributes
+        FROM code_nodes
+        WHERE repo_id = :repo_id
+        ORDER BY path, start_line
+    """), {"repo_id": repo_id}).mappings
+unresolved edge: session.execute
+unresolved edge: text
+unresolved edge: dict
+unresolved edge: session.execute(text("""
+        SELECT
+            id, repo_id, name, type, path, qualified_name,
+            start_line, end_line, start_byte, end_byte,
+            language, raw_source, attributes
+        FROM code_nodes
+        WHERE id = :node_id
+    """), {"node_id": node_id}).mappings().first
+unresolved edge: session.execute(text("""
+        SELECT
+            id, repo_id, name, type, path, qualified_name,
+            start_line, end_line, start_byte, end_byte,
+            language, raw_source, attributes
+        FROM code_nodes
+        WHERE id = :node_id
+    """), {"node_id": node_id}).mappings
+unresolved edge: session.execute
+unresolved edge: text
+unresolved edge: dict
+unresolved edge: session.execute(text("""
+        SELECT
+            id, repo_id, name, type, path, qualified_name,
+            start_line, end_line, start_byte, end_byte,
+            language, raw_source, attributes
+        FROM code_nodes
+        WHERE id = ANY(:node_ids)
+    """), {"node_ids": node_ids}).mappings().all
+unresolved edge: session.execute(text("""
+        SELECT
+            id, repo_id, name, type, path, qualified_name,
+            start_line, end_line, start_byte, end_byte,
+            language, raw_source, attributes
+        FROM code_nodes
+        WHERE id = ANY(:node_ids)
+    """), {"node_ids": node_ids}).mappings
+unresolved edge: session.execute
+unresolved edge: text
+unresolved edge: dict
+unresolved edge: session.execute(text("""
+        SELECT id, source_id, target_id, target_ref, type, attributes
+        FROM code_edges
+        WHERE source_id = :node_id
+           OR target_id = :node_id
+    """), {"node_id": node_id}).mappings().all
+unresolved edge: session.execute(text("""
+        SELECT id, source_id, target_id, target_ref, type, attributes
+        FROM code_edges
+        WHERE source_id = :node_id
+           OR target_id = :node_id
+    """), {"node_id": node_id}).mappings
+unresolved edge: session.execute
+unresolved edge: text
+unresolved edge: dict
+unresolved edge: min
+unresolved edge: session.execute(text("""
+        WITH RECURSIVE subgraph(node_id, level, path) AS (
+            -- Base: seed nodes at level 0
+            SELECT
+                seed.node_id,
+                0 AS level,
+                ARRAY[seed.node_id]::text[] AS path
+            FROM unnest(CAST(:seed_ids AS text[])) AS seed(node_id)
+
+            UNION ALL
+
+            -- Recursive: expand one hop along any edge, in either direction
+            SELECT
+                nxt.node_id,
+                sg.level + 1,
+                sg.path || nxt.node_id
+            FROM subgraph sg
+            JOIN code_edges e
+                ON e.source_id = sg.node_id
+                OR e.target_id = sg.node_id
+            CROSS JOIN LATERAL (
+                SELECT CASE
+                    WHEN e.source_id = sg.node_id THEN e.target_id
+                    ELSE e.source_id
+                END AS node_id
+            ) AS nxt
+            WHERE sg.level < :depth
+              AND nxt.node_id IS NOT NULL
+              AND NOT (nxt.node_id = ANY(sg.path))
+        )
+        SELECT DISTINCT node_id FROM subgraph
+    """), {"seed_ids": seed_node_ids, "depth": depth}).fetchall
+unresolved edge: session.execute
+unresolved edge: text
+unresolved edge: session.execute(text("""
+        SELECT id, source_id, target_id, target_ref, type, attributes
+        FROM code_edges
+        WHERE source_id = ANY(:ids)
+          AND target_id = ANY(:ids)
+    """), {"ids": discovered_ids}).mappings().all
+unresolved edge: session.execute(text("""
+        SELECT id, source_id, target_id, target_ref, type, attributes
+        FROM code_edges
+        WHERE source_id = ANY(:ids)
+          AND target_id = ANY(:ids)
+    """), {"ids": discovered_ids}).mappings
+unresolved edge: dict
+unresolved edge: db.execute(text("""
+        SELECT
+            id, name, type, path, qualified_name,
+            start_line, end_line, start_byte, end_byte,
+            language, raw_source, summary, attributes
+        FROM code_nodes
+        WHERE repo_id = :repo_id
+        ORDER BY path, start_line
+    """), {"repo_id": repo_id}).mappings().all
+unresolved edge: db.execute(text("""
+        SELECT
+            id, name, type, path, qualified_name,
+            start_line, end_line, start_byte, end_byte,
+            language, raw_source, summary, attributes
+        FROM code_nodes
+        WHERE repo_id = :repo_id
+        ORDER BY path, start_line
+    """), {"repo_id": repo_id}).mappings
+unresolved edge: db.execute
+unresolved edge: text
+unresolved edge: CodeNode
+unresolved edge: CodeNodeType
+unresolved edge: dict
+unresolved edge: db.execute
+unresolved edge: text
+unresolved edge: db.execute
+unresolved edge: text
+unresolved edge: json.dumps
+unresolved edge: abc
+unresolved edge: app.schemas.node
+unresolved edge: app.schemas.edge
+unresolved edge: tree_sitter
+unresolved edge: ABC
+unresolved edge: typing
+unresolved edge: app.schemas.node
+unresolved edge: app.schemas.edge
+unresolved edge: app.extractors.base_extractor
+unresolved edge: tree_sitter
+unresolved edge: hashlib
+unresolved edge: set
+unresolved edge: self._hanlde_module
+unresolved edge: nodes.append
+unresolved edge: self._handle_import
+unresolved edge: import_edges.get
+unresolved edge: self._merge_import_bindings
+unresolved edge: self._handle_function
+unresolved edge: edges.extend
+unresolved edge: self._handle_class
+unresolved edge: nodes.extend
+unresolved edge: node.child_by_field_name
+unresolved edge: list
+unresolved edge: import_edges.values
+unresolved edge: node.children_by_field_name
+unresolved edge: parse_import_name
+unresolved edge: register_import
+unresolved edge: node.child_by_field_name
+unresolved edge: relative_level
+unresolved edge: any
+unresolved edge: resolve_relative
+unresolved edge: node_text
+unresolved edge: imports.items
+unresolved edge: edges.append
+unresolved edge: CodeEdge
+unresolved edge: self._make_edge_id
+unresolved edge: self._module_name_from_path
+unresolved edge: qualified_name.rsplit
+unresolved edge: file_path.replace("\\", "/").rsplit("/", 1)[-1].rsplit
+unresolved edge: file_path.replace("\\", "/").rsplit
+unresolved edge: file_path.replace
+unresolved edge: CodeNode
+unresolved edge: self._make_node_id
+unresolved edge: node.text.decode
+unresolved edge: node_text
+unresolved edge: node.child_by_field_name
+unresolved edge: ValueError
+unresolved edge: class_node.child_by_field_name
+unresolved edge: list
+unresolved edge: superclasses_node.children_by_field_name
+unresolved edge: self._module_name_from_path
+unresolved edge: self._make_node_id
+unresolved edge: CodeNode
+unresolved edge: CodeEdge
+unresolved edge: self._make_edge_id
+unresolved edge: edges.append
+unresolved edge: child.child_by_field_name
+unresolved edge: self._handle_function
+unresolved edge: nodes.append
+unresolved edge: edges.extend
+unresolved edge: child.text.decode
+unresolved edge: node.child_by_field_name
+unresolved edge: ValueError
+unresolved edge: function_node.child_by_field_name
+unresolved edge: parameter_node.text.decode
+unresolved edge: returns_node.text.decode
+unresolved edge: any
+unresolved edge: name_node.text.decode
+unresolved edge: self._module_name_from_path
+unresolved edge: self._make_node_id
+unresolved edge: CodeNode
+unresolved edge: node.text.decode
+unresolved edge: CodeEdge
+unresolved edge: self._make_edge_id
+unresolved edge: set
+unresolved edge: self._extract_calls
+unresolved edge: seen_calls.add
+unresolved edge: edges.append
+unresolved edge: node.child_by_field_name
+unresolved edge: calls.append
+unresolved edge: function_node.text.decode
+unresolved edge: calls.extend
+unresolved edge: self._extract_calls
+unresolved edge: existing_edge.attributes.setdefault
+unresolved edge: incoming_edge.attributes.get
+unresolved edge: binding.get
+unresolved edge: isinstance
+unresolved edge: existing_bindings.append
+unresolved edge: seen.add
+unresolved edge: file_path.replace("\\", "/").strip
+unresolved edge: file_path.replace
+unresolved edge: normalized.endswith
+unresolved edge: ".".join
+unresolved edge: normalized.split
+unresolved edge: hashlib.sha1(raw.encode()).hexdigest
+unresolved edge: hashlib.sha1
+unresolved edge: raw.encode
+unresolved edge: hashlib.sha1(raw.encode()).hexdigest
+unresolved edge: hashlib.sha1
+unresolved edge: raw.encode
+unresolved edge: app.extractors.base_extractor
+unresolved edge: app.extractors.python_extractor
+unresolved edge: abc
+unresolved edge: tree_sitter
+unresolved edge: ABC
+unresolved edge: Path(file_path).suffix.lower
+unresolved edge: Path
+unresolved edge: pathlib
+unresolved edge: typing
+unresolved edge: app.parsers.base_parser
+unresolved edge: self.register
+unresolved edge: self._normalize_language
+unresolved edge: ValueError
+unresolved edge: self._normalize_extension
+unresolved edge: self._parsers_by_extension.get
+unresolved edge: Path
+unresolved edge: self._parsers_by_extension.get
+unresolved edge: self._normalize_extension
+unresolved edge: self._parsers_by_language.get
+unresolved edge: self._normalize_language
+unresolved edge: language.strip().lower
+unresolved edge: language.strip
+unresolved edge: ValueError
+unresolved edge: extension.strip().lower
+unresolved edge: extension.strip
+unresolved edge: ValueError
+unresolved edge: normalized_extension.startswith
+unresolved edge: logging
+unresolved edge: tree_sitter_python
+unresolved edge: tree_sitter
+unresolved edge: app.parsers.base_parser
+unresolved edge: frozenset
+unresolved edge: source.strip
+unresolved edge: logger.debug
+unresolved edge: source.encode
+unresolved edge: logger.warning
+unresolved edge: Parser
+unresolved edge: parser.parse
+unresolved edge: app.parsers.base_parser
+unresolved edge: app.parsers.parser_registry
+unresolved edge: app.parsers.python_parser
+unresolved edge: dataclasses
+unresolved edge: enum
+unresolved edge: typing
+unresolved edge: str
+unresolved edge: Enum
+unresolved edge: self.id.strip
+unresolved edge: ValueError
+unresolved edge: self.source_id.strip
+unresolved edge: self.target_id.strip
+unresolved edge: dict
+unresolved edge: dataclasses
+unresolved edge: enum
+unresolved edge: typing
+unresolved edge: str
+unresolved edge: Enum
+unresolved edge: self.id.strip
+unresolved edge: ValueError
+unresolved edge: self.name.strip
+unresolved edge: self.language.strip
+unresolved edge: self.path.strip
+unresolved edge: self.qualified_name.strip
+unresolved edge: dict
+unresolved edge: logging
+unresolved edge: app.db.repository
+unresolved edge: app.llm.embedding.jina_embedder
+unresolved edge: app.llm.summarizer.gemini
+unresolved edge: app.schemas.node
+unresolved edge: logger.info
+unresolved edge: len
+unresolved edge: self.summarizer.summarize_batch
+unresolved edge: summaries.get
+unresolved edge: update_summary
+unresolved edge: self.db.commit
+unresolved edge: self.embedder.embed
+unresolved edge: logger.warning
+unresolved edge: enumerate
+unresolved edge: self.db.begin_nested
+unresolved edge: upsert_embedding
+unresolved edge: rank_bm25
+unresolved edge: app.schemas.node
+unresolved edge: text.lower().split
+unresolved edge: text.lower
+unresolved edge: BM25Okapi
+unresolved edge: self.is_built
+unresolved edge: self._index.get_scores
+unresolved edge: sorted
+unresolved edge: range
+unresolved edge: len
+unresolved edge: app.llm.embedding.jina_embedder
+unresolved edge: app.services.search.bm25
+unresolved edge: app.services.search.vector
+unresolved edge: self.embedder.embed
+unresolved edge: self.bm25.search
+unresolved edge: self.vector.search
+unresolved edge: enumerate
+unresolved edge: fused_scores.get
+unresolved edge: sorted
+unresolved edge: fused_scores.items
+unresolved edge: json
+unresolved edge: sqlalchemy
+unresolved edge: self.db.execute(
+            text("""
+                SELECT node_id
+                FROM code_embeddings
+                ORDER BY embedding <=> CAST(:embedding AS vector)
+                LIMIT :top_k
+            """),
+            {
+                "embedding": json.dumps(query_embedding),
+                "top_k": top_k,
+            }
+        ).fetchall
+unresolved edge: self.db.execute
+unresolved edge: text
+unresolved edge: json.dumps
+unresolved edge: set
+unresolved edge: seen.add
+unresolved edge: node_ids.append
+unresolved edge: abc
+unresolved edge: ABC
+unresolved edge: os
+unresolved edge: httpx
+unresolved edge: app.llm.embedding.base
+unresolved edge: httpx.post
+unresolved edge: response.raise_for_status
+unresolved edge: response.json
+unresolved edge: os
+unresolved edge: httpx
+unresolved edge: app.llm.embedding.base
+unresolved edge: httpx.post
+unresolved edge: response.raise_for_status
+unresolved edge: response.json
+unresolved edge: abc
+unresolved edge: app.schemas.node
+unresolved edge: ABC
+unresolved edge: os
+unresolved edge: json
+unresolved edge: time
+unresolved edge: logging
+unresolved edge: google
+unresolved edge: google.genai
+unresolved edge: google.genai.errors
+unresolved edge: app.schemas.node
+unresolved edge: app.llm.summarizer.base
+unresolved edge: len
+unresolved edge: dict
+unresolved edge: node.attributes.get
+unresolved edge: list
+unresolved edge: enumerate
+unresolved edge: len
+unresolved edge: batches.append
+unresolved edge: current.append
+unresolved edge: genai.Client
+unresolved edge: range
+unresolved edge: self._client.models.generate_content
+unresolved edge: types.GenerateContentConfig
+unresolved edge: logger.error
+unresolved edge: logger.warning
+unresolved edge: time.sleep
+unresolved edge: RuntimeError
+unresolved edge: len
+unresolved edge: print
+unresolved edge: enumerate
+unresolved edge: sum
+unresolved edge: logger.info
+unresolved edge: "\n\n".join
+unresolved edge: PROMPT_TEMPLATE.format
+unresolved edge: self._call_api
+unresolved edge: json.loads
+unresolved edge: app.schemas.edge
+unresolved edge: app.schemas.node
+unresolved edge: node_by_path.setdefault(node.path, []).append
+unresolved edge: node_by_path.setdefault
+unresolved edge: node_by_qname.setdefault(node.qualified_name, []).append
+unresolved edge: node_by_qname.setdefault
+unresolved edge: node_by_name.setdefault(node.name, []).append
+unresolved edge: node_by_name.setdefault
+unresolved edge: (edge.attributes or {}).get
+unresolved edge: isinstance
+unresolved edge: b.get
+unresolved edge: import_map.setdefault(edge.source_id, []).append
+unresolved edge: import_map.setdefault
+unresolved edge: edge.target_ref.replace
+unresolved edge: module_by_path.get
+unresolved edge: edge.target_ref.split
+unresolved edge: ".".join
+unresolved edge: node_by_id.get
+unresolved edge: module_by_path.get
+unresolved edge: node_by_qname.get
+unresolved edge: import_map.get
+unresolved edge: entry["module_ref"].replace
+unresolved edge: node_by_id.get
+unresolved edge: module_by_path.get
+unresolved edge: str
+unresolved edge: node_by_qname.get
+unresolved edge: import_map.get
+unresolved edge: entry["module_ref"].replace
+unresolved edge: node_by_name.get

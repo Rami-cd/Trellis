@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.schemas.edge import CodeEdge
-from app.schemas.node import CodeNode
+from app.schemas.node import CodeNode, CodeNodeType
 
 # ---------------------------------------------------------------------------
 # Repository upsert
@@ -267,12 +267,53 @@ def get_subgraph(
 
 
 def fetch_by_repo(db, repo_id: str) -> list[CodeNode]:
-    ...
+    rows = db.execute(text("""
+        SELECT
+            id, name, type, path, qualified_name,
+            start_line, end_line, start_byte, end_byte,
+            language, raw_source, summary, attributes
+        FROM code_nodes
+        WHERE repo_id = :repo_id
+        ORDER BY path, start_line
+    """), {"repo_id": repo_id}).mappings().all()
+
+    return [
+        CodeNode(
+            id=row["id"],
+            name=row["name"],
+            type=CodeNodeType(row["type"]),
+            start_byte=row["start_byte"],
+            end_byte=row["end_byte"],
+            language=row["language"],
+            path=row["path"],
+            qualified_name=row["qualified_name"],
+            start_line=row["start_line"],
+            end_line=row["end_line"],
+            attributes=dict(row["attributes"] or {}),
+            raw_source=row["raw_source"],
+            summary=row["summary"],
+        )
+        for row in rows
+    ]
 
 
 def update_summary(db, node_id: str, summary: str) -> None:
-    ...
+    db.execute(text("""
+        UPDATE code_nodes
+        SET summary = :summary
+        WHERE id = :node_id
+    """), {"node_id": node_id, "summary": summary})
 
 
 def upsert_embedding(db, node_id: str, chunk_text: str, embedding: list[float]) -> None:
-    ...
+    db.execute(text("""
+        INSERT INTO code_embeddings (node_id, chunk_index, chunk_text, embedding)
+        VALUES (:node_id, 0, :chunk_text, CAST(:embedding AS vector))
+        ON CONFLICT (node_id, chunk_index) DO UPDATE SET
+            chunk_text = EXCLUDED.chunk_text,
+            embedding = EXCLUDED.embedding
+    """), {
+        "node_id": node_id,
+        "chunk_text": chunk_text,
+        "embedding": json.dumps(embedding),
+    })
