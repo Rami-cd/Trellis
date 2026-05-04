@@ -207,7 +207,7 @@ More tests in the future will be conducted with more languages too, but it requi
 
 This system independently converged on the architecture validated in:
 
-- **"Reliable Graph-RAG for Codebases: AST-Derived Graphs vs LLM-Extracted Knowledge Graphs"** (January 2026)
+- **"Reliable Graph-RAG for Codebases: AST-Derived Graphs vs LLM-Extracted Knowledge Graphs"** (January 2026) (still needs some progress)
 - **"Retrieval-Augmented Generation with Graphs"** (GraphRAG survey, January 2025)
 - **PathRAG** — path-based subgraph expansion over neighborhood flooding
 
