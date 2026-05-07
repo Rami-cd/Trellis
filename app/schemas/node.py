@@ -19,7 +19,7 @@ class CodeNode:
     end_byte: int | None = None
     language: str | None = None
     path: str | None = None
-    qualified_name: str | None = None # full path + name for disambiguation, e.g. "module.submodule.ClassName.method_name"
+    qualified_name: str | None = None
     start_line: int | None = None
     end_line: int | None = None
     attributes: dict[str, Any] = field(default_factory=dict) # metadata

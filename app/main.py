@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -27,7 +28,7 @@ from app.services.search.bm25 import BM25Index
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_REPO_PATH = Path(__file__).resolve().parent
+DEFAULT_REPO_PATH = Path(__file__).resolve().parent.parent / "tests" / "pytest" / "requests"
 REPO_PATH = Path(os.environ.get("TRELLIS_REPO_PATH", str(DEFAULT_REPO_PATH)))
 SEARCH_QUERY = "database connection"
 IGNORED_DIR_NAMES = {
@@ -149,7 +150,7 @@ def main() -> None:
         # Section 4: run the indexing pass to generate summaries and embeddings.
         # summarizer = GeminiSummarizer()
         embedder = JinaEmbedder()
-        # indexer = Indexer(summarizer=summarizer, embedder=embedder, db=db)
+        # indexer = Indexer(summarizer=None, embedder=embedder, db=db)
         # stats = indexer.run(repo_id=repo_id, nodes=nodes)
         # logger.info("Indexer stats: %s", stats)
 
@@ -191,22 +192,15 @@ def main() -> None:
         _log_top_results("Hybrid", hybrid_results, nodes_by_id)
 
         gemini = GeminiLLM()
-        questions = [
-            # tests call graph understanding
-            "How does the indexer work end to end?",
-            
-            # tests inheritance resolution
-            "What is the relationship between BaseEmbedder, JinaEmbedder and OllamaEmbedder?",
-            
-            # tests cross-module call resolution
-            "How does hybrid search combine BM25 and vector search results?",
-            
-            # tests internal method chain understanding
-            "How does GeminiSummarizer handle rate limiting and batching?",
-            
-            # tests graph traversal depth — requires knowing indexer → repository → DB
-            "What database operations does the indexer trigger?",
-        ]
+
+        questions = []
+        with open("D:\\Trellis\\test.jsonl") as f:
+            for idx, line in enumerate(f):
+                if idx >= 11:
+                    break
+                item = json.loads(line)
+                question = item["question"]
+                questions.append(question)
 
         for query in questions:
             seed_ids = hybrid.search(query, top_k=5)
@@ -242,6 +236,7 @@ def main() -> None:
             print(f"Q: {query}")
             print(f"{'=' * 60}")
             print(answer)
+        """"""
 
 # def count_repo(repo_root: Path) -> None:
 #     repo_id = "triller_diagnostic"

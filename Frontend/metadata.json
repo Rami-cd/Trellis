@@ -1,0 +1,6 @@
+{
+  "name": "Trellis",
+  "description": "Understand your codebase in seconds. Trellis indexes your repository so you can ask natural language questions and get grounded answers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

@@ -4,7 +4,7 @@ import os
 
 from app.db.repository import update_summary, upsert_embedding
 from app.llm.embedding.jina_embedder import JinaEmbedder
-from app.llm.summarizer.gemini import GeminiSummarizer
+from app.llm.summarizer.base import BaseSummarizer
 from app.schemas.node import CodeNode, CodeNodeType
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ def _build_document(node: CodeNode) -> str:
 class Indexer:
     def __init__(
         self,
-        summarizer: GeminiSummarizer,
+        summarizer: BaseSummarizer | None,
         embedder: JinaEmbedder,
         db,
     ) -> None:
@@ -42,22 +42,26 @@ class Indexer:
             len(eligible_nodes),
         )
 
-        summaries = self.summarizer.summarize_batch(eligible_nodes)
-        summaries_generated = 0
-        for node in eligible_nodes:
-            summary = summaries.get(node.id)
-            if summary is None:
-                continue
-            update_summary(self.db, node.id, summary)
-            node.summary = summary
-            summaries_generated += 1
+        if self.summarizer:
+            summaries = self.summarizer.summarize_batch(eligible_nodes)
+            summaries_generated = 0
+            for node in eligible_nodes:
+                summary = summaries.get(node.id)
+                if summary is None:
+                    continue
+                update_summary(self.db, node.id, summary)
+                node.summary = summary
+                summaries_generated += 1
 
-        self.db.commit()
-        logger.info(
-            "Stored %d summaries for repo_id=%s",
-            summaries_generated,
-            repo_id,
-        )
+            self.db.commit()
+            logger.info(
+                "Stored %d summaries for repo_id=%s",
+                summaries_generated,
+                repo_id,
+            )
+        else:
+            summaries_generated = 0
+            logger.info("No summarizer configured; skipping summary generation")
 
         node_docs = [(node.id, _build_document(node)) for node in eligible_nodes]
         embeddings_stored = 0

@@ -9,4 +9,5 @@ COPY app/ /app/app/
 
 EXPOSE 8000
 
-CMD ["python", "-m", "app.main", "/repos/target"]
+# CMD ["python", "-m", "app.main", "/repos/target"]
+CMD ["ping", "this is place holder."]
