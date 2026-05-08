@@ -1,8 +1,8 @@
 import os
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
 
 load_dotenv()
 
@@ -11,8 +11,9 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL must be set in the environment.")
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-SessionLocal = sessionmaker(
+engine = create_async_engine(DATABASE_URL, pool_pre_ping=True)
+
+AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     autoflush=False,
     autocommit=False,
@@ -21,9 +22,6 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
-def get_session() -> Generator[Session, None, None]:
-    session = SessionLocal()
-    try:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
         yield session
-    finally:
-        session.close()

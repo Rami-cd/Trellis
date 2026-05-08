@@ -14,14 +14,23 @@ class HybridSearch:
         self.vector = vector
         self.embedder = embedder
 
-    def search(self, query: str, top_k: int = 10) -> list[str]:
+    async def search(
+        self,
+        query: str,
+        repo_id: str,
+        top_k: int = 10,
+    ) -> list[str]:
         if top_k <= 0:
             return []
 
-        query_embedding = self.embedder.embed([query])[0]
-        
+        query_embedding = (await self.embedder.embed([query]))[0]
+
         bm25_results = self.bm25.search(query, top_k=top_k)
-        vector_results = self.vector.search(query_embedding, top_k=top_k)
+        vector_results = await self.vector.search(
+            query_embedding,
+            repo_id=repo_id,
+            top_k=top_k,
+        )
 
         fused_scores: dict[str, float] = {}
         rrf_k = 60

@@ -35,9 +35,9 @@ def _split_in_half(texts: list[str]) -> tuple[list[str], list[str]]:
     return texts[:midpoint], texts[midpoint:]
 
 class JinaEmbedder(BaseEmbedder):
-    def _embed_batch(
+    async def _embed_batch(
         self,
-        client: httpx.Client,
+        client: httpx.AsyncClient,
         texts: list[str],
         batch_label: str,
     ) -> list[list[float]]:
@@ -46,7 +46,7 @@ class JinaEmbedder(BaseEmbedder):
 
         for attempt in range(1, EMBED_MAX_RETRIES + 1):
             try:
-                response = client.post(
+                response = await client.post(
                     f"{OLLAMA_BASE_URL}/api/embed",
                     json={"model": MODEL, "input": texts},
                 )
@@ -76,7 +76,7 @@ class JinaEmbedder(BaseEmbedder):
                         len(left),
                         len(right),
                     )
-                    return self._embed_batch(client, left, f"{batch_label}a") + self._embed_batch(
+                    return await self._embed_batch(client, left, f"{batch_label}a") + await self._embed_batch(
                         client,
                         right,
                         f"{batch_label}b",
@@ -99,16 +99,16 @@ class JinaEmbedder(BaseEmbedder):
 
         raise RuntimeError(f"Embedding failed unexpectedly for {batch_label}")
 
-    def embed(self, texts: list[str]) -> list[list[float]]:
+    async def embed(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
 
         all_embeddings: list[list[float]] = []
         batches = _chunked(texts, max(1, EMBED_BATCH_SIZE))
 
-        with httpx.Client(timeout=EMBED_TIMEOUT_SECONDS) as client:
+        async with httpx.AsyncClient(timeout=EMBED_TIMEOUT_SECONDS) as client:
             for batch_index, batch in enumerate(batches, start=1):
                 batch_label = f"batch {batch_index}/{len(batches)}"
-                all_embeddings.extend(self._embed_batch(client, batch, batch_label))
+                all_embeddings.extend(await self._embed_batch(client, batch, batch_label))
 
         return all_embeddings

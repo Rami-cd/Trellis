@@ -27,3 +27,4 @@ google-genai==1.74.0
 rank_bm25
 
 pgvector
+fastapi-users[sqlalchemy]

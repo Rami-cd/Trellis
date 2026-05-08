@@ -1,26 +1,37 @@
 from __future__ import annotations
 import json
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 class VectorSearch:
-    def __init__(self, db) -> None:
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    def search(self, query_embedding: list[float], top_k: int = 10) -> list[str]:
+    async def search(
+        self,
+        query_embedding: list[float],
+        repo_id: str,
+        top_k: int = 10,
+    ) -> list[str]:
         if not query_embedding or top_k <= 0:
             return []
 
-        rows = self.db.execute(
-            text("""
-                SELECT node_id
-                FROM code_embeddings
-                ORDER BY embedding <=> CAST(:embedding AS vector)
-                LIMIT :top_k
-            """),
-            {
-                "embedding": json.dumps(query_embedding),
-                "top_k": top_k,
-            }
+        rows = (
+            await self.db.execute(
+                text("""
+                    SELECT ce.node_id
+                    FROM code_embeddings ce
+                    JOIN code_nodes cn ON cn.id = ce.node_id
+                    WHERE cn.repo_id = :repo_id
+                    ORDER BY ce.embedding <=> CAST(:embedding AS vector)
+                    LIMIT :top_k
+                """),
+                {
+                    "repo_id": repo_id,
+                    "embedding": json.dumps(query_embedding),
+                    "top_k": top_k,
+                },
+            )
         ).fetchall()
 
         node_ids: list[str] = []

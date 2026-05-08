@@ -1,3 +1,4 @@
+import asyncio
 import os
 import json
 import time
@@ -159,7 +160,7 @@ class GeminiSummarizer(BaseSummarizer):
 
         raise RuntimeError("Gemini summarizer failed after rate-limit retries.")
 
-    def summarize_batch(self, nodes: list[CodeNode]) -> dict[str, str]:
+    async def summarize_batch(self, nodes: list[CodeNode]) -> dict[str, str]:
         results: dict[str, str] = {}
 
         summarizable = [
@@ -193,7 +194,7 @@ class GeminiSummarizer(BaseSummarizer):
             blocks = "\n\n".join(batch_blocks)
             prompt = PROMPT_TEMPLATE.format(blocks=blocks)
 
-            text = self._call_api(prompt)
+            text = await asyncio.to_thread(self._call_api, prompt)
 
             if text:
                 parsed = json.loads(text)
