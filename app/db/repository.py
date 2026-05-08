@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import uuid
 from typing import Sequence
 
 from sqlalchemy import text
@@ -337,3 +338,101 @@ async def delete_repository(
         DELETE FROM repositories WHERE id = :repo_id
     """), {"repo_id": repo_id})
     await session.commit()
+
+
+async def create_conversation(
+    session: AsyncSession,
+    repo_id: str,
+    user_id: str,
+    title: str | None = None,
+) -> str:
+    conversation_id = str(uuid.uuid4())
+
+    await session.execute(text("""
+        INSERT INTO conversations (id, repo_id, user_id, title)
+        VALUES (:id, :repo_id, :user_id, :title)
+    """), {
+        "id": conversation_id,
+        "repo_id": repo_id,
+        "user_id": user_id,
+        "title": title,
+    })
+    await session.commit()
+
+    return conversation_id
+
+
+async def get_conversation(
+    session: AsyncSession,
+    conversation_id: str,
+) -> dict | None:
+    row = (await session.execute(text("""
+        SELECT id, repo_id, user_id, title, created_at
+        FROM conversations
+        WHERE id = :conversation_id
+    """), {"conversation_id": conversation_id})).mappings().first()
+
+    return dict(row) if row else None
+
+
+async def list_conversations(
+    session: AsyncSession,
+    repo_id: str,
+    user_id: str,
+) -> list[dict]:
+    rows = (await session.execute(text("""
+        SELECT id, repo_id, user_id, title, created_at
+        FROM conversations
+        WHERE repo_id = :repo_id
+          AND user_id = :user_id
+        ORDER BY created_at DESC, id DESC
+    """), {
+        "repo_id": repo_id,
+        "user_id": user_id,
+    })).mappings().all()
+
+    return [dict(row) for row in rows]
+
+
+async def create_message(
+    session: AsyncSession,
+    conversation_id: str,
+    role: str,
+    content: str,
+    nodes_used: list[str] | None = None,
+) -> str:
+    message_id = str(uuid.uuid4())
+
+    await session.execute(text("""
+        INSERT INTO messages (id, conversation_id, role, content, nodes_used)
+        VALUES (
+            :id,
+            :conversation_id,
+            :role,
+            :content,
+            CAST(:nodes_used AS JSONB)
+        )
+    """), {
+        "id": message_id,
+        "conversation_id": conversation_id,
+        "role": role,
+        "content": content,
+        "nodes_used": json.dumps(nodes_used) if nodes_used is not None else None,
+    })
+    await session.commit()
+
+    return message_id
+
+
+async def list_messages(
+    session: AsyncSession,
+    conversation_id: str,
+) -> list[dict]:
+    rows = (await session.execute(text("""
+        SELECT id, conversation_id, role, content, nodes_used, created_at
+        FROM messages
+        WHERE conversation_id = :conversation_id
+        ORDER BY created_at ASC, id ASC
+    """), {"conversation_id": conversation_id})).mappings().all()
+
+    return [dict(row) for row in rows]
