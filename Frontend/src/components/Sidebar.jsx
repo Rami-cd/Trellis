@@ -1,7 +1,7 @@
 import { MessageSquare, Folder, Library, BookOpen, History, Plus } from 'lucide-react';
-import logo from "../assets/trellis-icon.png";
+import logo from '../assets/trellis-icon.png';
 
-export default function Sidebar({ currentView, onViewChange }) {
+export default function Sidebar({ currentView, onViewChange, selectedRepo }) {
   const navItems = [
     { id: 'workspace', label: 'Chat', icon: MessageSquare },
     { id: 'files', label: 'Files', icon: Folder },
@@ -16,11 +16,11 @@ export default function Sidebar({ currentView, onViewChange }) {
             <img src={logo} alt="Logo" className="w-full h-full object-contain" />
           </div>
           <div>
-            <div className="text-on-surface font-semibold text-sm">Project Alpha</div>
-            <div className="text-on-surface-variant text-[10px] uppercase tracking-wider">Ready</div>
+            <div className="text-on-surface font-semibold text-sm">{selectedRepo?.name || 'No Repository'}</div>
+            <div className="text-on-surface-variant text-[10px] uppercase tracking-wider">{selectedRepo ? 'Ready' : 'Select One'}</div>
           </div>
         </div>
-        <button 
+        <button
           onClick={() => onViewChange('landing')}
           className="mt-6 w-full flex items-center justify-center gap-2 bg-primary text-on-primary py-2 px-4 rounded-md text-xs font-bold uppercase tracking-wider hover:brightness-110 shadow-[0_0_15px_rgba(227,239,38,0.2)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
         >
@@ -33,7 +33,7 @@ export default function Sidebar({ currentView, onViewChange }) {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
-          
+
           return (
             <button
               key={item.id}
@@ -52,10 +52,10 @@ export default function Sidebar({ currentView, onViewChange }) {
       </div>
 
       <div className="mt-auto px-3 border-t border-outline-variant pt-4 flex flex-col gap-1">
-        <button 
+        <button
           className="flex items-center gap-3 px-4 py-2 rounded-md text-on-surface-variant hover:bg-white/5 transition-all text-xs font-medium uppercase tracking-wider cursor-pointer"
-          onClick={() => window.open("https://google.com", "_blank", "noopener,noreferrer")}>
-
+          onClick={() => window.open('https://google.com', '_blank', 'noopener,noreferrer')}
+        >
           <BookOpen className="w-4 h-4" />
           <span>Docs</span>
         </button>

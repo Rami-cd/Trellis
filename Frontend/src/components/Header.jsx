@@ -1,69 +1,57 @@
-
 import { Search, Settings, Bell, User, LogOut, Shield, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
-/**
- * Global Header component.
- * Features the brand, global search, and interactive dropdowns for Notifications and Profile.
- */
-export default function Header({ onSettingsClick, isLoggedIn, onLogin }) {
+export default function Header({ onSettingsClick, isLoggedIn, onLogin, onLogout }) {
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [user, setUser] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [notifications] = useState([]);
+  const [user] = useState({});
 
   return (
     <header className="bg-surface-dim/80 border-outline-variant flex justify-between items-center px-4 h-14 w-full z-50 fixed top-0 glass border-b">
       <div className="flex items-center gap-4">
-        {/* Logo Section */}
         <div className="flex items-center gap-2">
           <span className="text-xl font-black tracking-tighter text-primary font-sans">Trellis</span>
         </div>
 
-        {/* Global Search Bar */}
         <div className="hidden sm:flex items-center bg-surface-container rounded-lg px-3 py-1.5 ml-4 border border-outline-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all">
           <Search className="text-on-surface/50 w-4 h-4 mr-2" />
-            <input 
-              className="bg-transparent border-none p-0 text-sm font-sans text-on-surface focus:ring-0 w-64 placeholder:text-on-surface/50 outline-none" 
-              placeholder="Search Chats" 
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
-            />
-          </div>
+          <input
+            className="bg-transparent border-none p-0 text-sm font-sans text-on-surface focus:ring-0 w-64 placeholder:text-on-surface/50 outline-none"
+            placeholder="Search Chats"
+            type="text"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
+        </div>
       </div>
-      
+
       <div className="flex items-center gap-2">
         {isLoggedIn ? (
           <>
-            <button 
+            <button
               onClick={onSettingsClick}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors active:scale-95 text-on-surface-variant hover:text-primary">
+              className="p-2 rounded-lg hover:bg-white/5 transition-colors active:scale-95 text-on-surface-variant hover:text-primary"
+            >
               <Settings className="w-5 h-5" />
             </button>
 
-            {/* Notifications Dropdown Container */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
-                className={`p-2 rounded-lg transition-all active:scale-95 relative ${showNotifications ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-white/5'}`}>
+                className={`p-2 rounded-lg transition-all active:scale-95 relative ${showNotifications ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-white/5'}`}
+              >
                 <Bell className="w-5 h-5" />
                 {notifications.length > 0 && (
                   <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-primary rounded-full ring-2 ring-surface-dim"></span>
                 )}
               </button>
-              
+
               <AnimatePresence>
                 {showNotifications && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -86,9 +74,8 @@ export default function Header({ onSettingsClick, isLoggedIn, onLogin }) {
               </AnimatePresence>
             </div>
 
-            {/* User Profile Dropdown Container */}
             <div className="relative ml-2">
-              <button 
+              <button
                 onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
                 className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all overflow-hidden ${showProfile ? 'border-primary ring-2 ring-primary/20 shadow-lg shadow-primary/10' : 'border-outline-variant hover:border-primary/50'}`}
               >
@@ -97,7 +84,7 @@ export default function Header({ onSettingsClick, isLoggedIn, onLogin }) {
 
               <AnimatePresence>
                 {showProfile && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -105,7 +92,7 @@ export default function Header({ onSettingsClick, isLoggedIn, onLogin }) {
                   >
                     <div className="p-4 mb-2">
                       <div className="flex items-center gap-3 mb-1">
-                         <p className="text-sm font-black text-on-surface">User Profile</p>
+                        <p className="text-sm font-black text-on-surface">User Profile</p>
                       </div>
                       <p className="text-[10px] text-on-surface-variant font-medium">{user.email}</p>
                     </div>
@@ -120,7 +107,10 @@ export default function Header({ onSettingsClick, isLoggedIn, onLogin }) {
                       ))}
                     </div>
                     <div className="h-px bg-outline-variant/30 my-2 mx-2"></div>
-                    <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-error hover:bg-error/10 text-[11px] font-black uppercase tracking-widest transition-all">
+                    <button
+                      onClick={onLogout}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-error hover:bg-error/10 text-[11px] font-black uppercase tracking-widest transition-all"
+                    >
                       <LogOut className="w-4 h-4" /> Log Out
                     </button>
                   </motion.div>
@@ -129,7 +119,7 @@ export default function Header({ onSettingsClick, isLoggedIn, onLogin }) {
             </div>
           </>
         ) : (
-          <button 
+          <button
             onClick={onLogin}
             className="px-4 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all active:scale-95"
           >
