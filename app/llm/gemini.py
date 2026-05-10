@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 import time
 import logging
+from collections.abc import Iterator
 from dotenv import load_dotenv
 from google import genai
 from google.genai.errors import APIError
@@ -45,3 +46,24 @@ class GeminiLLM(BaseLLM):
                 time.sleep(wait)
 
         return ""
+
+    def generate_stream(self, prompt: str) -> Iterator[str]:
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                response = self.client.models.generate_content_stream(
+                    model=self.model,
+                    contents=prompt,
+                )
+                for chunk in response:
+                    if chunk and chunk.text:
+                        yield chunk.text
+                return
+            except APIError as e:
+                if e.code != 429:
+                    raise
+                if attempt == MAX_RETRIES:
+                    logger.error("Rate limit hit too many times; giving up.")
+                    raise
+                wait = RATE_LIMIT_WAIT * attempt
+                logger.warning(f"Rate limit hit; waiting {wait}s before retry {attempt + 1}/{MAX_RETRIES}...")
+                time.sleep(wait)

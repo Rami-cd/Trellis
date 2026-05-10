@@ -62,6 +62,17 @@ services:
     entrypoint: sh -c "OLLAMA_HOST=http://ollama:11434 ollama pull unclemusclez/jina-embeddings-v2-base-code:q4"
     restart: "no"
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - app
+
 volumes:
   pgdata:
   ollama_data:

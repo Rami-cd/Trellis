@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -140,8 +141,35 @@ async def chat_route(
                 node_index=node_index,
             )
 
-            answer = await asyncio.to_thread(GeminiLLM().generate, prompt)
-            yield answer
+            llm = GeminiLLM()
+            queue: asyncio.Queue[str | None] = asyncio.Queue()
+            loop = asyncio.get_running_loop()
+            answer_parts: list[str] = []
+            stream_error: list[Exception] = []
+
+            def produce_chunks() -> None:
+                try:
+                    for chunk in llm.generate_stream(prompt):
+                        loop.call_soon_threadsafe(queue.put_nowait, chunk)
+                except Exception as exc:  # pragma: no cover - streamed runtime path
+                    stream_error.append(exc)
+                finally:
+                    loop.call_soon_threadsafe(queue.put_nowait, None)
+
+            producer = threading.Thread(target=produce_chunks, daemon=True)
+            producer.start()
+
+            while True:
+                chunk = await queue.get()
+                if chunk is None:
+                    break
+                answer_parts.append(chunk)
+                yield chunk
+
+            if stream_error:
+                raise stream_error[0]
+
+            answer = "".join(answer_parts)
 
             await create_message(
                 session,

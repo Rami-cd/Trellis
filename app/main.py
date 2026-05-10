@@ -7,8 +7,17 @@ from app.api.indexing import router as indexing_router
 from app.api.conversations import router as conversations_router
 from app.api.chat import router as chat_router
 from app.api.upload import router as upload_router
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Trellis Backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth_router)
 app.include_router(repository_router)
