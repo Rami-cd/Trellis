@@ -1,4 +1,5 @@
 from typing import Any
+from app.extractors.python_comment_extractor import _handle_comments
 from app.schemas.node import CodeNode, CodeNodeType
 from app.schemas.edge import CodeEdge, CodeEdgeType
 from app.extractors.base_extractor import BaseExtractor
@@ -270,8 +271,10 @@ class PythonExtractor(BaseExtractor):
     def _hanlde_module(self, node: Any, file_path: str, source: bytes) -> CodeNode:
         qualified_name = self._module_name_from_path(file_path)
         name = qualified_name.rsplit(".", 1)[-1] if qualified_name else file_path.replace("\\", "/").rsplit("/", 1)[-1].rsplit(".", 1)[0]
+        raw_source = node.text.decode("utf-8")
+
         return CodeNode(
-            id=self._make_node_id(self._repo, file_path, qualified_name, 1),
+            id=self._make_node_id(self._repo, qualified_name, 1),
             name=name,
             type=CodeNodeType.MODULE,
             start_byte=node.start_byte,
@@ -281,7 +284,8 @@ class PythonExtractor(BaseExtractor):
             qualified_name=qualified_name,
             start_line=node.start_point[0] + 1,
             end_line=node.end_point[0] + 1,
-            raw_source=node.text.decode("utf-8"),
+            raw_source=raw_source,
+            content_hash=self._make_content_hash(raw_source),
         )
 
     def _handle_class(self, node: Any, source: bytes, file_path: str, parent_id: str, repo: str) -> tuple[list[CodeNode], list[CodeEdge]]:
@@ -320,8 +324,13 @@ class PythonExtractor(BaseExtractor):
         module_qualified_name = self._module_name_from_path(file_path)
         class_qualified_name = f"{module_qualified_name}.{name}" if module_qualified_name else name
         start_line = node.start_point[0] + 1
-        class_id = self._make_node_id(repo, file_path, class_qualified_name, start_line)
+        class_id = self._make_node_id(repo, class_qualified_name, start_line)
 
+        # TODO: Check this later
+        comments = _handle_comments(node)
+
+        raw_source = node_text(node)
+        
         code_node = CodeNode(
             id=class_id,
             name=name,
@@ -333,10 +342,12 @@ class PythonExtractor(BaseExtractor):
             qualified_name=class_qualified_name,
             start_line=start_line,
             end_line=node.end_point[0] + 1,
-            raw_source=node_text(node),
+            raw_source=raw_source,
+            content_hash=self._make_content_hash(raw_source, neighbouring_comment="".join(comments)),
             attributes={
                 "decorators": decorators,
                 "bases": bases,
+                "comments": comments
             },
         )
 
@@ -421,6 +432,7 @@ class PythonExtractor(BaseExtractor):
             raise ValueError("function_definition is missing a name field.")
 
         parameters_node = function_node.child_by_field_name("parameters")
+
         args: dict[str, str | None] = {}
         if parameters_node is not None:
             for parameter_node in parameters_node.children:
@@ -458,7 +470,12 @@ class PythonExtractor(BaseExtractor):
                 f"{module_qualified_name}.{name}" if module_qualified_name else name
             )
         start_line = node.start_point[0] + 1
-        function_id = self._make_node_id(repo, file_path, qualified_name, start_line)
+        function_id = self._make_node_id(repo, qualified_name, start_line)
+
+        # TODO: Check this later
+        comments = _handle_comments(node)
+
+        raw_source = node.text.decode("utf-8")
 
         code_node = CodeNode(
             id=function_id,
@@ -471,12 +488,14 @@ class PythonExtractor(BaseExtractor):
             qualified_name=qualified_name,
             start_line=start_line,
             end_line=node.end_point[0] + 1,
-            raw_source=node.text.decode("utf-8"),
+            raw_source=raw_source,
+            content_hash=self._make_content_hash(raw_source, neighbouring_comment="".join(comments)),
             attributes={
                 "decorators": decorators,
                 "args": args,
                 "returns": returns,
                 "is_async": is_async,
+                "comments": comments
             },
         )
 
@@ -552,10 +571,14 @@ class PythonExtractor(BaseExtractor):
             normalized = normalized[:-3]
         return ".".join(part for part in normalized.split("/") if part)
 
-    def _make_node_id(self, repo: str, path: str, qualified_name: str, start_line: int) -> str:
-        raw = f"{repo}:{path}:{qualified_name}:{start_line}"
+    def _make_node_id(self, repo: str, qualified_name: str, start_line: int) -> str:
+        raw = f"{repo}:{qualified_name}:{start_line}"
         return hashlib.sha1(raw.encode()).hexdigest()
-    
+
+    def _make_content_hash(self, raw_source: str | None, neighbouring_comment: str = "") -> str:
+        content = (raw_source or "") + "\x00" + (neighbouring_comment or "")
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
     def _make_edge_id(self, source_id: str, target_ref: str, type: CodeEdgeType) -> str:
         raw = f"{source_id}:{target_ref}:{type}"
         return hashlib.sha1(raw.encode()).hexdigest()

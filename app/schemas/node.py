@@ -3,15 +3,16 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+
 class CodeNodeType(str, Enum):
     FUNCTION = "function"
     CLASS = "class"
     FILE = "file"
     MODULE = "module"
 
+
 @dataclass(slots=True)
 class CodeNode:
-
     id: str
     name: str
     type: CodeNodeType
@@ -24,6 +25,7 @@ class CodeNode:
     end_line: int | None = None
     attributes: dict[str, Any] = field(default_factory=dict) # metadata
     raw_source: str | None = None
+    content_hash: str | None = None
 
     summary: str | None = None
     embedding: list[float] | None = None
@@ -63,6 +65,7 @@ class CodeNode:
         self.qualified_name = (
             self.qualified_name.strip() if self.qualified_name else None
         )
+        self.content_hash = self.content_hash.strip() if self.content_hash else None
         self.attributes = dict(self.attributes)
 
 __all__ = ["CodeNode", "CodeNodeType"]

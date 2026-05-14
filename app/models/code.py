@@ -20,6 +20,7 @@ class CodeNode(Base):
     start_byte: Mapped[int | None] = mapped_column(Integer, nullable=True)
     end_byte: Mapped[int | None] = mapped_column(Integer, nullable=True)
     raw_source: Mapped[str | None] = mapped_column(Text, nullable=True)
+    content_hash: Mapped[str] = mapped_column(Text, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     attributes: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
 

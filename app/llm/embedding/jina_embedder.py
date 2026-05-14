@@ -1,21 +1,20 @@
 import logging
-import os
 import time
 
 import httpx
 
 from app.llm.embedding.base import BaseEmbedder
+from app.settings.config import LLM_CONFIG
 
 logger = logging.getLogger(__name__)
 
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-MODEL = "unclemusclez/jina-embeddings-v2-base-code:q4"
-EMBED_BATCH_SIZE = int(os.environ.get("EMBED_BATCH_SIZE", "8"))
-EMBED_TIMEOUT_SECONDS = float(os.environ.get("EMBED_TIMEOUT_SECONDS", "180"))
-EMBED_MAX_RETRIES = int(os.environ.get("EMBED_MAX_RETRIES", "3"))
-EMBED_RETRY_BACKOFF_SECONDS = float(
-    os.environ.get("EMBED_RETRY_BACKOFF_SECONDS", "5")
-)
+JINA_CONFIG = LLM_CONFIG.get("embedding", {}).get("jina", {})
+OLLAMA_BASE_URL = LLM_CONFIG["ollama"]["base_url"]
+MODEL = JINA_CONFIG["model_name"]
+EMBED_BATCH_SIZE = int(JINA_CONFIG["batch_size"])
+EMBED_TIMEOUT_SECONDS = float(JINA_CONFIG["timeout_seconds"])
+EMBED_MAX_RETRIES = int(JINA_CONFIG["max_retries"])
+EMBED_RETRY_BACKOFF_SECONDS = float(JINA_CONFIG["retry_backoff_seconds"])
 
 
 def _chunked(texts: list[str], batch_size: int) -> list[list[str]]:

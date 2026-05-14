@@ -12,7 +12,6 @@ from app.api.repository import _get_repo_or_404
 from app.auth.router import current_active_user
 from app.auth.user import User
 from app.db.connection import get_session
-from app.db.repository import fetch_by_repo, insert_edges, insert_nodes
 from app.extractors.python_extractor import PythonExtractor
 from app.extractors.resolver.resolver import resolve_edges
 from app.llm.embedding.jina_embedder import JinaEmbedder
@@ -61,6 +60,14 @@ def _iter_python_files(repo_root: Path) -> list[Path]:
             python_files.append(current_path / file_name)
 
     return python_files
+
+
+async def _update_indexed_at(session: AsyncSession, repo_id: str) -> None:
+    await session.execute(
+        text("UPDATE repositories SET indexed_at = NOW() WHERE id = :repo_id"),
+        {"repo_id": repo_id},
+    )
+    await session.commit()
 
 
 @router.post("/{repo_id}/index")
@@ -112,35 +119,25 @@ async def index_repository(
                 f"edges={len(edges)} resolved={resolved} unresolved={unresolved}\n"
             )
 
-            await insert_nodes(session, repo_id, nodes)
-            await insert_edges(session, edges)
-            yield "database: nodes and edges upserted\n"
-
-            stored_nodes = await fetch_by_repo(session, repo_id)
             indexer = Indexer(
                 summarizer=None,
                 embedder=JinaEmbedder(),
                 db=session,
             )
-            stats = await indexer.run(repo_id=repo_id, nodes=stored_nodes)
-            yield (
-                "embedding stats: "
-                f"nodes_processed={stats['nodes_processed']} "
-                f"summaries_generated={stats['summaries_generated']} "
-                f"embeddings_stored={stats['embeddings_stored']}\n"
-            )
+            stats = await indexer.run(repo_id=repo_id, nodes=nodes, edges=edges)
+            for key in (
+                "new",
+                "changed",
+                "unchanged",
+                "orphans_deleted",
+                "summaries_generated",
+                "embeddings_stored",
+            ):
+                yield f"{key}: {stats[key]}\n"
 
-            await session.execute(
-                text("""
-                    UPDATE repositories
-                    SET indexed_at = NOW()
-                    WHERE id = :repo_id
-                """),
-                {"repo_id": repo_id},
-            )
-            await session.commit()
-
+            await _update_indexed_at(session, repo_id)
             yield "done\n"
+
         except Exception as exc:
             yield f"error: {exc}\n"
             return

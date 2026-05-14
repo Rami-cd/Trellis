@@ -28,3 +28,5 @@ rank_bm25
 
 pgvector
 fastapi-users[sqlalchemy]
+
+jinja2

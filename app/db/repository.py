@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Sequence
+from typing import Any, Sequence
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,14 +54,28 @@ async def insert_nodes(
         INSERT INTO code_nodes (
             id, repo_id, name, type, path, qualified_name,
             start_line, end_line, start_byte, end_byte,
-            language, raw_source, attributes
+            language, raw_source, content_hash, attributes
         )
         VALUES (
             :id, :repo_id, :name, :type, :path, :qualified_name,
             :start_line, :end_line, :start_byte, :end_byte,
-            :language, :raw_source, CAST(:attributes AS JSONB)
+            :language, :raw_source, :content_hash, CAST(:attributes AS JSONB)
         )
-        ON CONFLICT (id) DO NOTHING
+        ON CONFLICT (id) DO UPDATE SET
+            repo_id = EXCLUDED.repo_id,
+            name = EXCLUDED.name,
+            type = EXCLUDED.type,
+            path = EXCLUDED.path,
+            qualified_name = EXCLUDED.qualified_name,
+            start_line = EXCLUDED.start_line,
+            end_line = EXCLUDED.end_line,
+            start_byte = EXCLUDED.start_byte,
+            end_byte = EXCLUDED.end_byte,
+            language = EXCLUDED.language,
+            raw_source = EXCLUDED.raw_source,
+            content_hash = EXCLUDED.content_hash,
+            attributes = EXCLUDED.attributes
+        WHERE code_nodes.content_hash IS DISTINCT FROM EXCLUDED.content_hash
     """), [
         {
             "id": node.id,
@@ -76,6 +90,7 @@ async def insert_nodes(
             "end_byte": node.end_byte,
             "language": node.language,
             "raw_source": node.raw_source,
+            "content_hash": node.content_hash,
             "attributes": json.dumps(node.attributes),
         }
         for node in nodes
@@ -122,13 +137,32 @@ async def get_nodes_by_repo(
         SELECT
             id, repo_id, name, type, path, qualified_name,
             start_line, end_line, start_byte, end_byte,
-            language, raw_source, attributes
+            language, raw_source, content_hash, attributes
         FROM code_nodes
         WHERE repo_id = :repo_id
         ORDER BY path, start_line
     """), {"repo_id": repo_id})).mappings().all()
 
     return [dict(row) for row in rows]
+
+
+async def get_repo_node_content_hashes(
+    session: AsyncSession,
+    repo_id: str,
+) -> dict[str, dict[str, Any]]:
+    rows = (await session.execute(text("""
+        SELECT id, path, content_hash
+        FROM code_nodes
+        WHERE repo_id = :repo_id
+    """), {"repo_id": repo_id})).mappings().all()
+
+    return {
+        row["id"]: {
+            "path": row["path"],
+            "content_hash": row["content_hash"],
+        }
+        for row in rows
+    }
 
 
 async def get_node_by_id(
@@ -139,7 +173,7 @@ async def get_node_by_id(
         SELECT
             id, repo_id, name, type, path, qualified_name,
             start_line, end_line, start_byte, end_byte,
-            language, raw_source, attributes
+            language, raw_source, content_hash, attributes
         FROM code_nodes
         WHERE id = :node_id
     """), {"node_id": node_id})).mappings().first()
@@ -158,12 +192,31 @@ async def get_nodes_by_ids(
         SELECT
             id, repo_id, name, type, path, qualified_name,
             start_line, end_line, start_byte, end_byte,
-            language, raw_source, attributes
+            language, raw_source, content_hash, attributes
         FROM code_nodes
         WHERE id = ANY(:node_ids)
     """), {"node_ids": node_ids})).mappings().all()
 
     return [dict(row) for row in rows]
+
+
+async def get_node_content_hashes(
+    session: AsyncSession,
+    node_ids: list[str],
+) -> dict[str, str | None]:
+    if not node_ids:
+        return {}
+
+    rows = (await session.execute(text("""
+        SELECT id, content_hash
+        FROM code_nodes
+        WHERE id = ANY(:node_ids)
+    """), {"node_ids": node_ids})).mappings().all()
+
+    return {
+        row["id"]: row["content_hash"]
+        for row in rows
+    }
 
 
 async def get_edges_by_node(
@@ -245,7 +298,7 @@ async def fetch_by_repo(session: AsyncSession, repo_id: str) -> list[CodeNode]:
         SELECT
             id, name, type, path, qualified_name,
             start_line, end_line, start_byte, end_byte,
-            language, raw_source, summary, attributes
+            language, raw_source, content_hash, summary, attributes
         FROM code_nodes
         WHERE repo_id = :repo_id
         ORDER BY path, start_line
@@ -265,10 +318,19 @@ async def fetch_by_repo(session: AsyncSession, repo_id: str) -> list[CodeNode]:
             end_line=row["end_line"],
             attributes=dict(row["attributes"] or {}),
             raw_source=row["raw_source"],
+            content_hash=row["content_hash"],
             summary=row["summary"],
         )
         for row in rows
     ]
+
+
+async def delete_nodes(session: AsyncSession, node_ids: list[str]) -> None:
+    await session.execute(
+        text("DELETE FROM code_nodes WHERE id = ANY(:ids)"),
+        {"ids": node_ids},
+    )
+    await session.commit()
 
 
 async def update_summary(session: AsyncSession, node_id: str, summary: str) -> None:
@@ -436,3 +498,37 @@ async def list_messages(
     """), {"conversation_id": conversation_id})).mappings().all()
 
     return [dict(row) for row in rows]
+
+async def update_node_by_id(
+    session: AsyncSession,
+    node_id: str,
+    **kwargs: Any,
+) -> None:
+    set_clauses = []
+    params = {"node_id": node_id}
+
+    for key, value in kwargs.items():
+        set_clauses.append(f"{key} = :{key}")
+        params[key] = value
+
+    if not set_clauses:
+        return
+
+    set_statement = ", ".join(set_clauses)
+
+    await session.execute(text(f"""
+        UPDATE code_nodes
+        SET {set_statement}
+        WHERE id = :node_id
+    """), params)
+    await session.commit()
+
+
+async def get_nodes_with_embeddings(session: AsyncSession, repo_id: str) -> set[str]:
+    rows = (await session.execute(text("""
+        SELECT cn.id
+        FROM code_nodes cn
+        JOIN code_embeddings ce ON ce.node_id = cn.id
+        WHERE cn.repo_id = :repo_id
+    """), {"repo_id": repo_id})).fetchall()
+    return {row[0] for row in rows}

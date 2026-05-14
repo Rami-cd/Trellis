@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app.llm.embedding.jina_embedder import JinaEmbedder
+from app.llm.embedding.base import BaseEmbedder
 from app.services.search.bm25 import BM25Index
 from app.services.search.vector import VectorSearch
 
@@ -8,7 +8,7 @@ class HybridSearch:
         self,
         bm25: BM25Index,
         vector: VectorSearch,
-        embedder: JinaEmbedder,
+        embedder: BaseEmbedder,
     ) -> None:
         self.bm25 = bm25
         self.vector = vector

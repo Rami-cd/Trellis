@@ -116,7 +116,7 @@ async def chat_route(
                 top_k=body.top_k,
             )
 
-            subgraph = await get_subgraph(session, seed_ids, depth=body.depth)
+            subgraph = await get_subgraph(session, seed_ids, depth=3) # changed the depth
             node_index = {
                 node["id"]: indexed_node_lookup.get(node["id"], node)
                 for node in subgraph["nodes"]
