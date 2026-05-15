@@ -36,7 +36,7 @@ Evaluated on the **SWE-QA-Benchmark** (Flask split) — a public code QA dataset
 | Run | Configuration | Overall Score |
 |-----|-------------|---------------|
 | Baseline | BM25 only — no embeddings, no summaries | 3.25 / 5 |
-| **Full system** | **Hybrid retrieval + graph expansion + LLM summaries + embeddings** | **4.50 / 5** |
+| **Full system** | **Hybrid retrieval + graph expansion + LLM summaries + embeddings** | **4.62 / 5** |
 
 **Full system score breakdown:**
 
