@@ -59,10 +59,7 @@ Evaluated using Gemini as judge against human-written ground truth answers. Ques
 
 ## Architecture
 
-```
-<img width="2802" height="1103" alt="Blank diagram" src="https://github.com/user-attachments/assets/8999f174-e61d-4a83-b7ab-cab83b717b52" />
-
-```
+<img width="2802" height="1103" alt="Blank diagram" src="https://github.com/user-attachments/assets/fe17d8c5-02d3-4b25-9154-718add07e923"/>
 
 ---
 
