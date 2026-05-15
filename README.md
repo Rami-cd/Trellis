@@ -39,13 +39,7 @@ Evaluated on the **SWE-QA-Benchmark** (Flask split) — a public code QA dataset
 
 **Full system score breakdown:**
 
-| Metric | Score |
-|--------|-------|
-| Relevance | 4.73 / 5 |
-| Correctness | 4.52 / 5 |
-| Completeness | 4.40 / 5 |
-| Clarity | 4.83 / 5 |
-| **Overall** | **4.50 / 5** |
+<img width="1640" height="922" alt="Metric (2)" src="https://github.com/user-attachments/assets/50ec108b-b64d-4628-b7c6-9db8ac840b02" />
 
 **Score distribution (full system, 48 questions):**
 
@@ -66,56 +60,8 @@ Evaluated using Gemini as judge against human-written ground truth answers. Ques
 ## Architecture
 
 ```
-                        ┌──────────────────────────────┐
-                        │         Your Codebase        │
-                        └──────────────┬───────────────┘
-                                       │
-                              ┌────────▼────────┐
-                              │   AST Parser    │
-                              │  (Tree-sitter)  │
-                              └────────┬────────┘
-                                       │
-                              ┌────────▼────────┐
-                              │  Graph Builder  │
-                              │  nodes + edges  │
-                              │  DEFINES, CALLS │
-                              │  INHERITS, etc. │
-                              └────────┬────────┘
-                                       │
-                    ┌──────────────────┼──────────────────┐
-                    │                  │                  │
-           ┌────────▼───────┐ ┌────────▼───────┐ ┌────────▼───────┐
-           │  LLM Summaries │ │   Embeddings   │ │   BM25 Index   │
-           │ (Gemini 2.5)   │ │  (Gemini emb.) │ │  (in-memory)   │
-           └────────┬───────┘ └────────┬───────┘ └────────┬───────┘
-                    │                  │                  │
-                    └──────────────────┼──────────────────┘
-                                       │
-                              ┌────────▼─────────┐
-                              │    Postgres      │
-                              │   + pgvector     │
-                              └────────┬─────────┘
-                                       │
-                            ┌──────────▼───────────┐
-                            │    Query Pipeline    │
-                            │                      │
-                            │  1. Hybrid Search    │
-                            │     BM25 + Vector    │
-                            │     RRF Fusion       │
-                            │                      │
-                            │  2. Graph Expansion  │
-                            │     Recursive CTE    │
-                            │     Bidirectional    │
-                            │                      │
-                            │  3. Prompt Assembly  │
-                            │     Token-budgeted   │
-                            │                      │
-                            │  4. LLM Generation   │
-                            └──────────┬───────────┘
-                                       │
-                              ┌────────▼────────┐
-                              │     Answer      │
-                              └─────────────────┘
+<img width="2802" height="1103" alt="Blank diagram" src="https://github.com/user-attachments/assets/8999f174-e61d-4a83-b7ab-cab83b717b52" />
+
 ```
 
 ---
