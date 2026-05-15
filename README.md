@@ -6,6 +6,7 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com)
+[![Linkedin](https://www.linkedin.com/posts/rami-cheikh-3b27272b8_graphrag-llms-softwarearchitecture-ugcPost-7460859361444343808-287M?utm_source=share&utm_medium=member_desktop&rcm=ACoAAExIJ3YBjmKt6QsQqj46H4WAr0fGXV6gBV4)]
 
 ---
 
