@@ -22,6 +22,7 @@ export default defineConfig(({mode}) => {
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       hmr: process.env.DISABLE_HMR !== 'true',
+      allowedHosts: ['pacific-delight-production-d09d.up.railway.app'],
     },
   };
 });
