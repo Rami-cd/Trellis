@@ -32,7 +32,7 @@ REPO_PATH = Path(os.environ.get("TRELLIS_REPO_PATH", "/repos/target"))
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok"+origins}
 
 @app.get("/debug-cors")
 def debug_cors():
