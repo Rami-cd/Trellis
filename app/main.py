@@ -28,6 +28,10 @@ app.include_router(conversations_router)
 app.include_router(chat_router)
 app.include_router(upload_router)
 
+@app.get("/debug-cors")
+def debug_cors():
+    return {"origins": origins}
+
 REPO_PATH = Path(os.environ.get("TRELLIS_REPO_PATH", "/repos/target"))
 
 @app.get("/health")
