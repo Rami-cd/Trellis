@@ -69,7 +69,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=https://trellis-production-183f.up.railway.app
     depends_on:
       - app
 
