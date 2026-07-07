@@ -11,7 +11,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Trellis Backend")
 
-origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
 
 app.add_middleware(
     CORSMiddleware,
