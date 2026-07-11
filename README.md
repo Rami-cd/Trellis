@@ -11,6 +11,7 @@ Embedding is disabled by default, you can enable by editing 'indexing.py' line 1
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](YOUR_LINKEDIN_URL_HERE)
 
 ---
 
@@ -40,17 +41,11 @@ Evaluated on the **SWE-QA-Benchmark** (Flask split) — a public code QA dataset
 | Run | Configuration | Overall Score |
 |-----|-------------|---------------|
 | Baseline | BM25 only — no embeddings, no summaries | 3.25 / 5 |
-| **Full system** | **Hybrid retrieval + graph expansion + LLM summaries + embeddings** | **4.50 / 5** |
+| **Full system** | **Hybrid retrieval + graph expansion + LLM summaries + embeddings** | **4.62 / 5** |
 
 **Full system score breakdown:**
 
-| Metric | Score |
-|--------|-------|
-| Relevance | 4.73 / 5 |
-| Correctness | 4.52 / 5 |
-| Completeness | 4.40 / 5 |
-| Clarity | 4.83 / 5 |
-| **Overall** | **4.50 / 5** |
+<img width="1640" height="922" alt="Metric (2)" src="https://github.com/user-attachments/assets/50ec108b-b64d-4628-b7c6-9db8ac840b02" />
 
 **Score distribution (full system, 48 questions):**
 
@@ -70,58 +65,7 @@ Evaluated using Gemini as judge against human-written ground truth answers. Ques
 
 ## Architecture
 
-```
-                        ┌──────────────────────────────┐
-                        │         Your Codebase        │
-                        └──────────────┬───────────────┘
-                                       │
-                              ┌────────▼────────┐
-                              │   AST Parser    │
-                              │  (Tree-sitter)  │
-                              └────────┬────────┘
-                                       │
-                              ┌────────▼────────┐
-                              │  Graph Builder  │
-                              │  nodes + edges  │
-                              │  DEFINES, CALLS │
-                              │  INHERITS, etc. │
-                              └────────┬────────┘
-                                       │
-                    ┌──────────────────┼──────────────────┐
-                    │                  │                  │
-           ┌────────▼───────┐ ┌────────▼───────┐ ┌────────▼───────┐
-           │  LLM Summaries │ │   Embeddings   │ │   BM25 Index   │
-           │ (Gemini 2.5)   │ │  (Gemini emb.) │ │  (in-memory)   │
-           └────────┬───────┘ └────────┬───────┘ └────────┬───────┘
-                    │                  │                  │
-                    └──────────────────┼──────────────────┘
-                                       │
-                              ┌────────▼─────────┐
-                              │    Postgres      │
-                              │   + pgvector     │
-                              └────────┬─────────┘
-                                       │
-                            ┌──────────▼───────────┐
-                            │    Query Pipeline    │
-                            │                      │
-                            │  1. Hybrid Search    │
-                            │     BM25 + Vector    │
-                            │     RRF Fusion       │
-                            │                      │
-                            │  2. Graph Expansion  │
-                            │     Recursive CTE    │
-                            │     Bidirectional    │
-                            │                      │
-                            │  3. Prompt Assembly  │
-                            │     Token-budgeted   │
-                            │                      │
-                            │  4. LLM Generation   │
-                            └──────────┬───────────┘
-                                       │
-                              ┌────────▼────────┐
-                              │     Answer      │
-                              └─────────────────┘
-```
+<img width="2802" height="1103" alt="Blank diagram" src="https://github.com/user-attachments/assets/fe17d8c5-02d3-4b25-9154-718add07e923"/>
 
 ---
 

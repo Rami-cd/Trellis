@@ -6,9 +6,18 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+<<<<<<< HEAD
     depends_on:
       db:
         condition: service_healthy
+=======
+      # OLLAMA_BASE_URL: http://ollama:11434
+    depends_on:
+      db:
+        condition: service_healthy
+      # ollama-init:
+      #   condition: service_completed_successfully
+>>>>>>> 73868cecac99b697e13d5d321925ae1de3f52e78
     ports:
       - "8000:8000"
     volumes:
@@ -36,6 +45,35 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
 
+<<<<<<< HEAD
+=======
+  # ollama:
+  #   image: alpine/ollama
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   mem_limit: 2g
+  #   environment:
+  #     - OLLAMA_MAX_LOADED_MODELS=1
+  #     - OLLAMA_NUM_PARALLEL=1
+  #     - OLLAMA_KEEP_ALIVE=5m
+  #   healthcheck:
+  #     test: ["CMD", "ollama", "list"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+
+  # ollama-init:
+  #   image: alpine/ollama
+  #   depends_on:
+  #     ollama:
+  #       condition: service_healthy
+  #   entrypoint: sh -c "OLLAMA_HOST=http://ollama:11434 ollama pull unclemusclez/jina-embeddings-v2-base-code:q4"
+  #   restart: "no"
+
+>>>>>>> 73868cecac99b697e13d5d321925ae1de3f52e78
   frontend:
     build:
       context: ./Frontend
@@ -43,7 +81,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=https://trellis-production-183f.up.railway.app
     depends_on:
       - app
     volumes:
@@ -53,4 +91,9 @@ services:
 
 volumes:
   pgdata:
+<<<<<<< HEAD
   repos_data:
+=======
+  # ollama_data:
+  repos_data:
+>>>>>>> 73868cecac99b697e13d5d321925ae1de3f52e78

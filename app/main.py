@@ -11,9 +11,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Trellis Backend")
 
+origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,3 +37,7 @@ REPO_PATH = Path(os.environ.get("TRELLIS_REPO_PATH", "/repos/target"))
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/debug-cors")
+def debug_cors():
+    return {"origins": origins}
