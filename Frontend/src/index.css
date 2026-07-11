@@ -51,6 +51,19 @@
   }
 }
 
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-on-background antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image: radial-gradient(circle at top right, rgba(227, 239, 38, 0.05) 0%, transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(7, 102, 83, 0.1) 0%, transparent 40%);
+  }
+}
+
 /* Custom Graph Background with Emerald tint */
 .graph-bg {
   background-image: radial-gradient(circle at 1px 1px, #1a3a33 1px, transparent 0);

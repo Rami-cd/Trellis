@@ -19,7 +19,7 @@ llm:
       model_name: "gemini-embedding-001"
       task_type: "RETRIEVAL_DOCUMENT"
       dimensions: 768
-      batch_size: 100
+      batch_size: 50
     jina:
       model_name: "unclemusclez/jina-embeddings-v2-base-code:q4"
       batch_size: 8

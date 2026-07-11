@@ -16,7 +16,7 @@ export default function Header({ onSettingsClick, isLoggedIn, onLogin, onLogout 
           <span className="text-xl font-black tracking-tighter text-primary font-sans">Trellis</span>
         </div>
 
-        <div className="hidden sm:flex items-center bg-surface-container rounded-lg px-3 py-1.5 ml-4 border border-outline-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+        {/* <div className="hidden sm:flex items-center bg-surface-container rounded-lg px-3 py-1.5 ml-4 border border-outline-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all">
           <Search className="text-on-surface/50 w-4 h-4 mr-2" />
           <input
             className="bg-transparent border-none p-0 text-sm font-sans text-on-surface focus:ring-0 w-64 placeholder:text-on-surface/50 outline-none"
@@ -25,7 +25,7 @@ export default function Header({ onSettingsClick, isLoggedIn, onLogin, onLogout 
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
           />
-        </div>
+        </div> */}
       </div>
 
       <div className="flex items-center gap-2">

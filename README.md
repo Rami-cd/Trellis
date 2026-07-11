@@ -1,6 +1,11 @@
 # Trellis 🔍
 ### Graph-Augmented Code Intelligence Engine
 
+
+## Note
+Embedding is disabled by default, you can enable by editing 'indexing.py' line 123.
+
+
 > Ask questions about any Python codebase in natural language. Trellis understands your code structurally — not just as text.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

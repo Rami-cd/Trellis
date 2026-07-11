@@ -14,8 +14,8 @@ from app.db.repository import (
     upsert_embedding,
     get_nodes_with_embeddings
 )
-from app.llm.embedding.jina_embedder import EMBED_BATCH_SIZE
-from app.llm.embedding.gemini_embedder import BaseEmbedder
+from app.llm.embedding.base import BaseEmbedder
+from app.llm.embedding.gemini_embedder import BATCH_SIZE as EMBED_BATCH_SIZE
 from app.llm.summarizer.base import BaseSummarizer
 from app.schemas.edge import CodeEdge
 from app.schemas.node import CodeNode, CodeNodeType
@@ -225,8 +225,8 @@ class Indexer:
                 continue  # modules are never embedded
             if current.raw_source is None:
                 continue  # nothing to embed
-            if current.summary is None:
-                continue  # do not embed nodes without summaries
+            # if current.summary is None:
+            #     continue  # do not embed nodes without summaries
 
             is_new_or_changed = node_id in changed_new_ids
             is_missing_embedding = node_id not in nodes_with_embeddings

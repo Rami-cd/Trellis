@@ -27,6 +27,7 @@ export default function App() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [pendingStartPayload, setPendingStartPayload] = useState(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     setIsLoggedIn(Boolean(localStorage.getItem('token')));
@@ -192,7 +193,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans overflow-hidden">
+    <div className="h-screen bg-background flex flex-col font-sans overflow-hidden">
       <Header
         isLoggedIn={isLoggedIn}
         onLogin={() => setShowAuthModal(true)}
@@ -200,28 +201,23 @@ export default function App() {
         onSettingsClick={() => setView('settings')}
       />
 
-      <div className="flex flex-1 pt-14 h-screen overflow-hidden">
-        {view !== 'landing' && (
+      {/* CHANGED: Removed h-screen from here, added min-h-0 to allow flex shrinking */}
+      <div className="flex flex-1 pt-14 overflow-hidden min-h-0">
+        {isLoggedIn && (
           <Sidebar
             currentView={view}
             onViewChange={setView}
             selectedRepo={selectedRepo}
+            collapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed((value) => !value)}
           />
         )}
 
-        <main className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${view !== 'landing' ? 'ml-64' : 'ml-0'}`}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={view}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="flex-1 flex flex-col h-full"
-            >
-              {renderView()}
-            </motion.div>
-          </AnimatePresence>
+        {/* CHANGED: Added min-w-0 to prevent any horizontal text blowouts */}
+        <main className={`flex-1 flex flex-col overflow-hidden min-h-0 min-w-0 transition-all duration-300 ${isLoggedIn ? (isSidebarCollapsed ? 'ml-20' : 'ml-64') : 'ml-0'}`}>
+          <div className="flex-1 flex flex-col h-full min-h-0">
+            {renderView()}
+          </div>
         </main>
       </div>
 

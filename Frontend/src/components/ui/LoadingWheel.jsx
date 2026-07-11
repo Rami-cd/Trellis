@@ -53,7 +53,8 @@ export default function LoadingWheel({ size = 200 }) {
           height: '75%',
           borderRadius: '50%',
           border: '1px solid rgba(227,239,38,0.15)',
-          filter: 'blur(3px)',
+          // CHANGED: Dynamic blur that scales with the component size
+          filter: `blur(${size * 0.015}px)`, 
           rotateX: 45,
         }}
       />

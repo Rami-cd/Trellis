@@ -14,7 +14,7 @@ from app.auth.user import User
 from app.db.connection import get_session
 from app.extractors.python_extractor import PythonExtractor
 from app.extractors.resolver.resolver import resolve_edges
-from app.llm.embedding.jina_embedder import JinaEmbedder
+from app.llm.embedding.gemini_embedder import GeminiEmbedder
 from app.parsers.parser_registry import ParserRegistry
 from app.parsers.python_parser import PythonParser
 from app.services.indexer import Indexer
@@ -121,7 +121,7 @@ async def index_repository(
 
             indexer = Indexer(
                 summarizer=None,
-                embedder=JinaEmbedder(),
+                embedder=GeminiEmbedder(),
                 db=session,
             )
             stats = await indexer.run(repo_id=repo_id, nodes=nodes, edges=edges)

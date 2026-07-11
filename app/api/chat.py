@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import threading
 
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -21,7 +23,7 @@ from app.db.repository import (
     get_subgraph,
 )
 from app.llm.gemini import GeminiLLM
-from app.llm.embedding.jina_embedder import JinaEmbedder
+from app.llm.embedding.gemini_embedder import GeminiEmbedder
 from app.services.prompt_builder import build_explanation_prompt
 from app.services.search.bm25 import BM25Index
 from app.services.search.hybrid import HybridSearch
@@ -108,7 +110,7 @@ async def chat_route(
             hybrid = HybridSearch(
                 bm25=bm25,
                 vector=VectorSearch(session),
-                embedder=JinaEmbedder(),
+                embedder=GeminiEmbedder(),
             )
             seed_ids = await hybrid.search(
                 body.message,
@@ -116,7 +118,7 @@ async def chat_route(
                 top_k=body.top_k,
             )
 
-            subgraph = await get_subgraph(session, seed_ids, depth=3) # changed the depth
+            subgraph = await get_subgraph(session, seed_ids, depth=3)
             node_index = {
                 node["id"]: indexed_node_lookup.get(node["id"], node)
                 for node in subgraph["nodes"]
@@ -132,6 +134,25 @@ async def chat_route(
                 for node in subgraph["nodes"]
                 if node["id"] not in seed_set and node["id"] in node_index
             ]
+
+            # --- NEW: emit the graph payload as its own event, before text streaming ---
+            graph_event = {
+                "type": "graph",
+                "seed_ids": seed_ids,
+                "nodes": [
+                    {
+                        "id": node_id,
+                        "qualified_name": node.get("qualified_name"),
+                        "type": node.get("type"),
+                        "summary": node.get("summary"),
+                        "raw_source": node.get("raw_source"),
+                        "is_seed": node_id in seed_set,
+                    }
+                    for node_id, node in node_index.items()
+                ],
+                "edges": subgraph["edges"],
+            }
+            yield json.dumps(graph_event) + "\n"
 
             prompt = build_explanation_prompt(
                 query=body.message,
@@ -151,7 +172,7 @@ async def chat_route(
                 try:
                     for chunk in llm.generate_stream(prompt):
                         loop.call_soon_threadsafe(queue.put_nowait, chunk)
-                except Exception as exc:  # pragma: no cover - streamed runtime path
+                except Exception as exc:
                     stream_error.append(exc)
                 finally:
                     loop.call_soon_threadsafe(queue.put_nowait, None)
@@ -164,7 +185,7 @@ async def chat_route(
                 if chunk is None:
                     break
                 answer_parts.append(chunk)
-                yield chunk
+                yield json.dumps({"type": "text", "content": chunk}) + "\n"
 
             if stream_error:
                 raise stream_error[0]
@@ -178,8 +199,12 @@ async def chat_route(
                 content=answer,
                 nodes_used=seed_ids,
             )
+
+            yield json.dumps({"type": "done", "conversation_id": conversation_id}) + "\n"
         except Exception as exc:
-            yield f"error: {exc}\n"
+            yield json.dumps({"type": "error", "message": str(exc)}) + "\n"
             return
+
+    return StreamingResponse(stream(), media_type="application/x-ndjson")
 
     return StreamingResponse(stream(), media_type="text/plain")

@@ -6,16 +6,16 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      OLLAMA_BASE_URL: http://ollama:11434
     depends_on:
       db:
         condition: service_healthy
-      ollama-init:
-        condition: service_completed_successfully
     ports:
       - "8000:8000"
     volumes:
       - repos_data:/repos
+      - .:/app
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   db:
     image: pgvector/pgvector:pg17
@@ -36,35 +36,9 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
 
-  ollama:
-    image: alpine/ollama
-    container_name: ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    mem_limit: 2g
-    environment:
-      - OLLAMA_MAX_LOADED_MODELS=1
-      - OLLAMA_NUM_PARALLEL=1
-      - OLLAMA_KEEP_ALIVE=5m
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
-  ollama-init:
-    image: alpine/ollama
-    depends_on:
-      ollama:
-        condition: service_healthy
-    entrypoint: sh -c "OLLAMA_HOST=http://ollama:11434 ollama pull unclemusclez/jina-embeddings-v2-base-code:q4"
-    restart: "no"
-
   frontend:
     build:
-      context: ./frontend
+      context: ./Frontend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -72,8 +46,11 @@ services:
       - VITE_API_URL=http://localhost:8000
     depends_on:
       - app
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 volumes:
   pgdata:
-  ollama_data:
   repos_data:
