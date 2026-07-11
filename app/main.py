@@ -11,9 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Trellis Backend")
 
+raw_origins = os.getenv("CORS_ORIGINS") or "http://localhost:3000,http://127.0.0.1:3000"
 origins = [
     origin.strip()
-    for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    for origin in raw_origins.split(",")
     if origin.strip()
 ]
 

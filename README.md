@@ -3,7 +3,7 @@
 
 
 ## Note
-Embedding is disabled by default, you can enable by editing 'indexing.py' line 123.
+Summarizing is disabled by default, you can enable by editing 'indexing.py' line 123.
 
 
 > Ask questions about any Python codebase in natural language. Trellis understands your code structurally — not just as text.

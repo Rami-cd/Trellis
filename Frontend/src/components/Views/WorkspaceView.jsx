@@ -219,9 +219,8 @@ export default function WorkspaceView({ repo }) {
             ) : (
               <div className="flex-1 flex items-center justify-center text-center">
                 <div>
-                  <img src={logo} alt="logo" width={60} className="mx-auto mb-4" />
                   <p className="text-on-surface-variant text-xs">
-                    Select a repository to start
+                    Ask a question to start
                   </p>
                 </div>
               </div>

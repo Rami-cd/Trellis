@@ -39,8 +39,9 @@ async function streamTextResponse(response, onChunk) {
 
 async function indexRepo(repoId, onChunk) {
   const token = getToken();
+  const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/repositories/${repoId}/index`, {
+  const response = await fetch(`${apiBaseUrl}/repositories/${repoId}/index`, {
     method: 'POST',
     headers: token
       ? {

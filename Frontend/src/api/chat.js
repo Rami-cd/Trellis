@@ -83,8 +83,9 @@ async function streamChatResponse(response, { onChunk, onGraph, onDone, onError 
 async function sendMessage(repoId, message, conversationId, callbacks) {
   const finalConversationId = conversationId ?? await createConversation(repoId);
   const token = getToken();
+  const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/repositories/${repoId}/chat`, {
+  const response = await fetch(`${apiBaseUrl}/repositories/${repoId}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
